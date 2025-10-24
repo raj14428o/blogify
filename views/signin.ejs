@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <%- include('./partials/head') %>
+    <style>
+        /* Make Full Name, Email & Password inputs have darker, thicker borders */
+        #fullName,
+        #email,
+        #exampleInputPassword1 {
+            border: 2px solid #000; /* darker border */
+            border-radius: 6px;     /* optional: rounded corners */
+        }
+
+        /* Highlight border on focus */
+        #fullName:focus,
+        #email:focus,
+        #exampleInputPassword1:focus {
+            border-color: #0056b3; /* dark blue when active */
+            box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+        }
+    </style>
+    <title>SignIn</title>
+</head>
+
+<body>
+    <%- include('./partials/nav') %>
+    <div class="container mt-4">
+        <form action="/user/signin" method="post">
+           
+
+            <!-- Email Field -->
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <input type="email" name="email" class="form-control" id="email" aria-describedby="email" placeholder="Enter your email id">
+                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+            </div>
+
+            <!-- Password Field -->
+            <div class="mb-3">
+                <label for="exampleInputPassword1" class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" id="exampleInputPassword1" placeholder="Enter your password">
+            </div>
+
+         
+
+            <!-- Submit -->
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+</body>
+<%- include('./partials/scripts') %>
+
+</html>
