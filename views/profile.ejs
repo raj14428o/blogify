@@ -3,86 +3,271 @@
 <head>
   <%- include('./partials/head') %>
   <title><%= profileUser.fullName %>'s Profile</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Primary UI Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Comments Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===== Base Reset ===== */
+    html, body {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #111827;
+      background: #f5f6f8;
+    }
+
+    /* ===== Page Wrapper ===== */
+    .profile-page {
+      background: #ffffff;
+      width: 100vw;
+      min-height: 100vh;
+      padding: 2.5rem 3rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    /* ===== Profile Header ===== */
+    .profile-header {
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 2.5rem;
+    }
+
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      background-color: #e5e7eb;
+    }
+
+    .profile-name {
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .profile-email {
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .profile-actions button {
+      font-size: 0.95rem;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-weight: 600;
+      min-width: 120px;
+    }
+
+    /* ===== Stats ===== */
+    .profile-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 1.25rem;
+    }
+
+    .profile-stats span {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .profile-stats span strong {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1.1;
+    }
+
+    /* ===== Sections ===== */
+    .content-section {
+      padding: 1.5rem 0;
+    }
+
+    .section-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 1.2rem;
+      letter-spacing: -0.01em;
+    }
+
+    /* ===== Posts Section ===== */
+    .blogs-section {
+      border-left: 4px solid #2563eb;
+      padding-left: 1.5rem;
+    }
+
+    .blogs-section .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .profile-blog-card {
+      display: flex;
+      gap: 1.25rem;
+      align-items: center;
+      padding: 1.1rem 0;
+      border-bottom: 1px solid #eef2f7;
+    }
+
+    .profile-blog-card:last-child {
+      border-bottom: none;
+    }
+
+    .profile-blog-card img {
+      width: 110px;
+      height: 75px;
+      border-radius: 10px;
+      object-fit: cover;
+      background-color: #f1f3f5;
+    }
+
+    .profile-blog-card a {
+      text-decoration: none;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .profile-blog-card a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== Comments Section ===== */
+    .comments-section {
+      border-left: 3px solid #10b981;
+      padding-left: 1.25rem;
+      font-family: 'Roboto', system-ui, sans-serif;
+    }
+
+    .comments-section .section-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .comment-item {
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: #374151;
+      margin-bottom: 1.25rem;
+    }
+
+    .comment-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .comment-item a {
+      font-weight: 500;
+    }
+  </style>
 </head>
+
 <body>
   <%- include('./partials/nav') %>
 
-  <div class="container mt-4">
+  <div class="container-fluid p-0 m-0">
+    <div class="profile-page">
 
-    <!-- 👤 User Info Card -->
-<div class="card p-3 mb-4 shadow-sm">
-  <div class="row g-0 align-items-center">
-    <div class="col-auto">
-      <img src="<%= profileUser.profileImageUrl %>" 
-           width="80" 
-           class="rounded-circle border" 
-           alt="User Avatar">
-    </div>
-    <div class="col">
-      <h4 class="mb-1 fw-semibold"><%= profileUser.fullName %></h4>
-      <p class="text-muted mb-1"><%= profileUser.email %></p>
-      <span class="badge bg-secondary"><%= profileUser.role %></span>
-    </div>
-  </div>
-</div>
+      <!-- 👤 PROFILE HEADER -->
+      <div class="profile-header">
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <img 
+              src="<%= profileUser.profileImageUrl %>" 
+              alt="Profile Avatar"
+              class="profile-avatar">
+          </div>
 
-<div class="container mt-4">
-  <div class="row">
-    
-    <!-- 📝 Blogs Column -->
-    <div class="col-md-6">
-      <h4 class="mb-3">Blogs by <%= profileUser.fullName %> (<%= blogs.length %>)</h4>
-      <% if (blogs.length === 0) { %>
-        <p class="text-muted">No blogs published yet.</p>
-      <% } else { %>
-        <% blogs.forEach(blog => { %>
-          <div class="card mb-2 shadow-sm">
-            <div class="row g-0 align-items-center">
-              <div class="col-auto">
-                <img src="<%= blog.coverImageURL %>" 
-                     class="img-fluid rounded-start" 
-                     style="width:80px; height:80px; object-fit:cover;" 
-                     alt="Cover">
+          <div class="col">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="profile-name"><%= profileUser.fullName %></div>
+                <div class="profile-email"><%= profileUser.email %></div>
               </div>
-              <div class="col">
-                <div class="card-body py-2 px-3">
-                  <h6 class="card-title mb-1">
-                    <a href="/blog/<%= blog._id %>" class="text-decoration-none fw-semibold">
-                      <%= blog.title %>
-                    </a>
-                  </h6>
-                  <p class="card-text text-muted small mb-0">
-                    <%= blog.createdAt.toDateString() %>
-                  </p>
-                </div>
+
+              <div class="profile-actions d-flex gap-2">
+                <button class="btn btn-primary">Follow</button>
+                <button class="btn btn-outline-secondary">Message</button>
               </div>
             </div>
-          </div>
-        <% }) %>
-      <% } %>
-    </div>
 
-    <!-- 💬 Comments Column -->
-    <div class="col-md-6">
-      <h4 class="mb-3">Comments by <%= profileUser.fullName %> (<%= comments.length %>)</h4>
-      <% if (comments.length === 0) { %>
-        <p class="text-muted">No comments posted yet.</p>
-      <% } else { %>
-        <% comments.forEach(comment => { %>
-          <div class="card mb-2 p-2 shadow-sm">
-            <p class="mb-1 small">
-              <strong>On blog:</strong> 
-              <a href="/blog/<%= comment.blogId %>" class="text-decoration-none">
-                <%= comment.blogTitle %>
-              </a>
-            </p>
-            <pre class="mb-0 small" style="white-space:pre-wrap;"><%= comment.content %></pre>
+            <div class="profile-stats">
+              <span><strong><%= blogs.length %></strong> posts</span>
+              <span><strong>0</strong> followers</span>
+              <span><strong>0</strong> following</span>
+            </div>
           </div>
-        <% }) %>
-      <% } %>
-    </div>
+        </div>
+      </div>
 
+      <!-- 📄 CONTENT -->
+      <div class="row g-5">
+
+        <!-- 📝 POSTS -->
+        <div class="col-md-8">
+          <div class="content-section blogs-section">
+            <div class="section-title">Posts</div>
+
+            <% if (blogs.length === 0) { %>
+              <p class="text-muted">No posts published yet.</p>
+            <% } else { %>
+              <% blogs.forEach(blog => { %>
+                <div class="profile-blog-card">
+                  <img src="<%= blog.coverImageURL %>" alt="Cover">
+                  <div>
+                    <a href="/blog/<%= blog._id %>"><%= blog.title %></a>
+                    <div class="text-muted small">
+                      <%= blog.createdAt.toDateString() %>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- 💬 COMMENTS -->
+        <div class="col-md-4">
+          <div class="content-section comments-section">
+            <div class="section-title">Comments</div>
+
+            <% if (comments.length === 0) { %>
+              <p class="text-muted">No comments posted yet.</p>
+            <% } else { %>
+              <% comments.forEach(comment => { %>
+                <div class="comment-item">
+                  <div class="small text-muted mb-1">
+                    On 
+                    <a href="/blog/<%= comment.blogId %>" class="text-decoration-none">
+                      <%= comment.blogTitle %>
+                    </a>
+                  </div>
+                  <div><%= comment.content %></div>
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+
+      </div>
+    </div>
   </div>
-</div>
+
+  <%- include('./partials/scripts') %>
+</body>
+</html>
+
+
 
     

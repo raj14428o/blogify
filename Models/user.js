@@ -1,53 +1,87 @@
-const {Schema,model} =  require('mongoose');
-const {createHmac,randomBytes} = require("crypto");
+const { Schema, model } = require('mongoose');
+const { createHmac, randomBytes } = require("crypto");
 const { createTokenForUser } = require('../services/authentication');
 const userSchema = new Schema(
     {
         fullName:
         {
-            type:String,
+            type: String,
             required: true,
         },
         email:
         {
-            type:String,
+            type: String,
             required: true,
             unique: true,
         },
         salt:
         {
-            type:String,
-          
+            type: String,
+
         },
         password:
         {
-            type:String,
-            required:true,
+            type: String,
+            required: true,
         },
         profileImageUrl:
         {
-            type:String,
+            type: String,
             default: "/images/default.jpg"
         },
         role:
         {
-            type:String,
-            enum: ["USER","ADMIN"],
-            default:"USER"
-        }
-    },{timestamps: true}
+            type: String,
+            enum: ["USER", "ADMIN"],
+            default: "USER"
+        },
+        followers: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "user",
+                default: []
+            }
+        ],
+        following: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "user",
+                default: []
+            }
+        ],
+        followersCount: {
+            type: Number,
+            default: 0
+        },
+        followingCount: {
+            type: Number,
+            default: 0
+        },
+        reportCount: {
+            type: Number,
+            default: 0
+        },
+        reportedBy: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "user",
+                default: []
+            }
+        ],
+
+
+    }, { timestamps: true }
 );
 
-userSchema.pre("save", function(next)
-{
-    const user=this;
+userSchema.pre("save", function (next) {
+    const user = this;
 
-    if(!user.isModified("password")) return;
+    if (!user.isModified("password")) return;
 
     const salt = randomBytes(16).toString();
     const hashedPassword = createHmac('sha256', salt)
-    .update(user.password)
-    .digest("hex");
+        .update(user.password)
+        .digest("hex");
 
     this.salt = salt;
     this.password = hashedPassword;
@@ -70,10 +104,10 @@ userSchema.static("matchPassword", async function (email, password) {
 
     // Convert to plain object & hide sensitive fields
     const userObj = user.toObject();
-    
+
 
     return token = createTokenForUser(userObj);
 });
 
-const User = model('user',userSchema);
-module.exports=User;
+const User = model('user', userSchema);
+module.exports = User;
