@@ -1,54 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <%- include('./partials/head') %>
-    <style>
-        /* Make Full Name, Email & Password inputs have darker, thicker borders */
-        #fullName,
-        #email,
-        #exampleInputPassword1 {
-            border: 2px solid #000; /* darker border */
-            border-radius: 6px;     /* optional: rounded corners */
-        }
+  <%- include('./partials/head') %>
+  <title>Sign In</title>
 
-        /* Highlight border on focus */
-        #fullName:focus,
-        #email:focus,
-        #exampleInputPassword1:focus {
-            border-color: #0056b3; /* dark blue when active */
-            box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
-        }
-    </style>
-    <title>SignIn</title>
+  <style>
+    /* Input styling */
+    #email,
+    #password {
+      border: 2px solid #000;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+    }
+
+    #email:focus,
+    #password:focus {
+      border-color: #0056b3;
+      box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+    }
+  </style>
 </head>
 
 <body>
-    <%- include('./partials/nav') %>
-    <div class="container mt-4">
-        <form action="/user/signin" method="post">
-           
+  <%- include('./partials/nav') %>
 
-            <!-- Email Field -->
-            <div class="mb-3">
-                <label for="email" class="form-label">Email address</label>
-                <input type="email" name="email" class="form-control" id="email" aria-describedby="email" placeholder="Enter your email id">
-                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
-            </div>
+  <div class="container mt-5">
+    <div class="mx-auto" style="max-width: 720px;">
 
-            <!-- Password Field -->
-            <div class="mb-3">
-                <label for="exampleInputPassword1" class="form-label">Password</label>
-                <input type="password" name="password" class="form-control" id="exampleInputPassword1" placeholder="Enter your password">
-            </div>
+      <!-- Heading -->
+      <h3 class="mb-4 fw-semibold">Sign in to your account</h3>
 
-         
+      <!-- Signin Form -->
+      <form action="/user/signin" method="post">
 
-            <!-- Submit -->
-            <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Email address</label>
+          <input
+            type="email"
+            name="email"
+            class="form-control"
+            id="email"
+            placeholder="Enter your email"
+            required
+          >
+          <div class="form-text">
+            We'll never share your email with anyone else.
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-4">
+          <label for="password" class="form-label">Password</label>
+          <input
+            type="password"
+            name="password"
+            class="form-control"
+            id="password"
+            placeholder="Enter your password"
+            required
+          >
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary px-4 py-2">
+          Sign In
+        </button>
+
+      </form>
+
     </div>
-</body>
-<%- include('./partials/scripts') %>
+  </div>
 
+  <%- include('./partials/scripts') %>
+</body>
 </html>
