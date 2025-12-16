@@ -91,6 +91,18 @@
 
   <div class="edit-profile-wrapper">
     <h1>Edit Profile</h1>
+   <% if (typeof error !== "undefined") { %>
+  <div style="
+    background:#fee2e2;
+    color:#991b1b;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:1.5rem;
+    font-weight:500;
+  ">
+    <%= error %>
+  </div>
+<% } %>
 
     <!-- PROFILE IMAGE -->
     <div class="edit-card">

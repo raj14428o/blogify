@@ -3,10 +3,36 @@ const bcrypt = require('bcryptjs');
 const User = require('../Models/user');
 const Blog = require('../Models/blog');
 const Comment = require('../Models/comments');
+const multer = require("multer");
+const path = require("path");
+
 const sendEmail = require('../utils/sendEmail');
 const { isLoggedIn} = require("../middlewares/auth")
 const router = Router();
 
+// Multer setup for profile image uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../public/profile"));
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname);
+    cb(null, `${req.user._id}${ext}`); // overwrite same user's image
+  }
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files allowed"), false);
+    }
+  },
+  limits: { fileSize: 2 * 1024 * 1024 } // 2MB
+});
+const uploadProfileImage = upload;
 
 
 // Signin logic
@@ -49,6 +75,117 @@ router.post('/signin', async (req, res) => {
 router.get("/profile/edit", isLoggedIn, (req, res) => {
   res.render("profile_edit", { user: req.user });
 });
+
+const { createTokenForUser } = require("../services/authentication");
+
+router.post(
+  "/profile/edit/image",
+  isLoggedIn,
+  upload.single("profileImage"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.redirect("/user/profile/edit");
+      }
+
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { profileImageUrl: `/profile/${req.file.filename}` },
+        { new: true }
+      );
+
+      // 🔥 RE-ISSUE JWT with updated data
+      const token = createTokenForUser(user.toObject());
+      res.cookie("token", token);
+
+      res.redirect(`/user/profile/${user._id}`);
+    } catch (err) {
+      console.error("Edit profile image error:", err);
+      res.redirect("/user/profile/edit");
+    }
+  }
+);
+
+router.post(
+  "/profile/edit/name",
+  isLoggedIn,
+  async (req, res) => {
+    try {
+      const { fullName } = req.body;
+
+      if (!fullName || !fullName.trim()) {
+        return res.redirect("/user/profile/edit");
+      }
+
+      const user = await User.findById(req.user._id);
+      user.fullName = fullName.trim();
+
+      await user.save();
+
+   
+      const token = createTokenForUser(user.toObject());
+      res.cookie("token", token);
+
+      res.redirect(`/user/profile/${user._id}`);
+    } catch (err) {
+      console.error("Edit name error:", err);
+      res.redirect("/user/profile/edit");
+    }
+  }
+);
+
+router.post(
+  "/profile/edit/email",
+  isLoggedIn,
+  async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email || !email.trim()) {
+        return res.redirect("/user/profile/edit");
+      }
+
+      const newEmail = email.trim().toLowerCase();
+
+      const user = await User.findById(req.user._id);
+
+      // no change → do nothing
+      if (newEmail === user.email) {
+        return res.redirect("/user/profile/edit");
+      }
+
+      //  CHECK if email already exists
+      const existingUser = await User.findOne({ email: newEmail });
+      if (existingUser) {
+        // same user? (rare but safe)
+        if (existingUser._id.toString() !== user._id.toString()) {
+          return res.render("profile_edit", {
+            user,
+            error: "Email already in use by another account",
+          });
+        }
+      }
+
+      // update email
+      user.email = newEmail;
+      user.isEmailVerified = false;
+
+      await user.save();
+
+      res.clearCookie("token");
+
+      // trigger verification flow
+      req.session.verifyEmail = user.email;
+      req.session.verifyPurpose = "signup";
+
+      return res.redirect("/user/verify");
+    } catch (err) {
+      console.error("Edit email error:", err);
+      res.redirect("/user/profile/edit");
+    }
+  }
+);
+
 
 // Profile page
 router.get('/profile/:id', async (req, res) => {
