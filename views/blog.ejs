@@ -227,6 +227,30 @@
       margin-top: 4px;
       color: #374151;
     }
+
+    /* ===== Image Preview Modal (Reusable) ===== */
+.image-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.image-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* Cover hover cue */
+.clickable-cover {
+  cursor: zoom-in;
+}
+
   </style>
 </head>
 
@@ -262,7 +286,13 @@
     <!-- Image + Content -->
     <div class="blog-main-wrapper">
       <div class="cover-container">
-        <img src="<%= blog.coverImageURL %>" alt="Blog cover">
+        <img 
+  src="<%= blog.coverImageURL %>" 
+  alt="Blog cover"
+  id="coverImage"
+  class="clickable-cover"
+  onclick="openCoverModal(this.src)"
+>
       </div>
 
       <div class="blog-content-wrapper">
@@ -317,8 +347,24 @@
 
         <% }) %>
       </div>
-   
+      <div id="coverModal" class="image-modal" onclick="closeCoverModal()">
+  <img id="coverModalImg" alt="Cover preview">
+</div>
 
+     <%- include('./partials/scripts') %>
+  </body>
+  <script>
+function openCoverModal(src) {
+  document.getElementById("coverModalImg").src = src;
+  document.getElementById("coverModal").style.display = "flex";
+}
+
+function closeCoverModal() {
+  document.getElementById("coverModal").style.display = "none";
+}
+</script>
+
+</html>
 
 
 

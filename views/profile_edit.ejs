@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('./partials/head') %>
+  <title>Edit Profile</title>
+
+  <style>
+    body {
+      background: #f3f4f6;
+    }
+
+    .edit-profile-wrapper {
+      max-width: 720px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 2.5rem;
+      border-radius: 16px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+    }
+
+    .edit-profile-wrapper h1 {
+      font-weight: 700;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .edit-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .edit-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .edit-card-title {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    .edit-btn {
+      background: none;
+      border: none;
+      color: #2563eb;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .edit-form {
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .edit-form.active {
+      display: block;
+    }
+
+    .profile-preview {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e5e7eb;
+      margin-top: 1rem;
+    }
+
+    .warning {
+      font-size: 0.85rem;
+      color: #dc2626;
+      margin-top: 6px;
+    }
+
+    .save-btn {
+      margin-top: 1rem;
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: #111827;
+      color: white;
+      border: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+
+<body>
+  <%- include('./partials/nav') %>
+
+  <div class="edit-profile-wrapper">
+    <h1>Edit Profile</h1>
+
+    <!-- PROFILE IMAGE -->
+    <div class="edit-card">
+      <div class="edit-card-header">
+        <div class="edit-card-title">Profile Image</div>
+        <button class="edit-btn" onclick="toggleEdit('imageEdit')">Edit</button>
+      </div>
+
+      <img src="<%= user.profileImageUrl %>" class="profile-preview">
+
+      <form 
+        class="edit-form" 
+        id="imageEdit"
+        action="/user/profile/edit/image"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <input type="file" name="profileImage" accept="image/*" class="form-control mt-2">
+        <button class="save-btn">Update Image</button>
+      </form>
+    </div>
+
+    <!-- NAME -->
+    <div class="edit-card">
+      <div class="edit-card-header">
+        <div class="edit-card-title">Full Name</div>
+        <button class="edit-btn" onclick="toggleEdit('nameEdit')">Edit</button>
+      </div>
+
+      <p class="mt-2"><%= user.fullName %></p>
+
+      <form 
+        class="edit-form" 
+        id="nameEdit"
+        action="/user/profile/edit/name"
+        method="POST"
+      >
+        <input 
+          type="text" 
+          name="fullName"
+          value="<%= user.fullName %>"
+          class="form-control"
+          required
+        >
+        <button class="save-btn">Save Name</button>
+      </form>
+    </div>
+
+    <!-- EMAIL -->
+    <div class="edit-card">
+      <div class="edit-card-header">
+        <div class="edit-card-title">Email Address</div>
+        <button class="edit-btn" onclick="toggleEdit('emailEdit')">Edit</button>
+      </div>
+
+      <p class="mt-2"><%= user.email %></p>
+
+      <form 
+        class="edit-form" 
+        id="emailEdit"
+        action="/user/profile/edit/email"
+        method="POST"
+      >
+        <input 
+          type="email"
+          name="email"
+          value="<%= user.email %>"
+          class="form-control"
+          required
+        >
+        <div class="warning">
+          Changing email will require re-verification and you will be logged out.
+        </div>
+        <button class="save-btn">Update Email</button>
+      </form>
+    </div>
+
+  </div>
+
+  <%- include('./partials/scripts') %>
+
+  <script>
+    function toggleEdit(id) {
+      document.getElementById(id).classList.toggle("active");
+    }
+  </script>
+</body>
+</html>

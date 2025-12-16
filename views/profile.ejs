@@ -41,7 +41,7 @@
       margin-bottom: 2.5rem;
     }
 
-    .profile-avatar {
+    .profile-avatar-lg{
       width: 120px;
       height: 120px;
       border-radius: 50%;
@@ -209,7 +209,85 @@
     .comment-item a {
       font-weight: 500;
     }
-  </style>
+
+/* ===== MOBILE PROFILE REORDER ===== */
+@media (max-width: 500px) {
+
+  /* Make the container flexible */
+  .profile-header .col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Default order */
+  .profile-name {
+    order: 1;
+  }
+
+  .profile-email {
+    order: 2;
+  }
+
+  /* Stats come BEFORE actions */
+  .profile-stats {
+    order: 3;
+    margin-top: 1rem;
+  }
+
+  /* Actions move BELOW stats */
+  .profile-actions {
+    order: 4;
+    width: 100%;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Mobile-friendly buttons */
+  .profile-actions .pill,
+  .profile-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+/* ===== FIX FAT MOBILE BUTTONS ===== */
+@media (max-width: 500px) {
+
+  .profile-actions .pill,
+  .profile-actions button {
+    height: 42px;              /* lock height */
+    padding: 0 18px;           /* horizontal only */
+    line-height: 42px;         /* vertical centering */
+    white-space: nowrap;       /* prevent wrapping */
+    border-radius: 999px;
+  }
+}
+
+/* ===== Avatar Click Preview ===== */
+.clickable-avatar {
+  cursor: pointer;
+}
+
+.avatar-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.avatar-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 14px;     
+  object-fit: contain;  
+  background: transparent;
+}
+
+
+</style>
 </head>
 
 <body>
@@ -222,10 +300,12 @@
       <div class="profile-header">
         <div class="row align-items-center">
           <div class="col-auto">
-            <img 
-              src="<%= profileUser.profileImageUrl %>" 
-              alt="Profile Avatar"
-              class="profile-avatar">
+           <img 
+  src="<%= profileUser.profileImageUrl %>" 
+  alt="Profile Avatar"
+  class="profile-avatar-lg clickable-avatar"
+  onclick="openAvatarModal(this.src)"
+>
           </div>
 
           <div class="col">
@@ -239,7 +319,7 @@
 
   <% if (user && user._id.toString() === profileUser._id.toString()) { %>
     
-   <a href="/profile/edit" class="pill pill-edit">
+   <a href="/user/profile/edit" class="pill pill-edit">
    Edit Profile
 </a>
 
@@ -329,6 +409,9 @@
       </div>
     </div>
   </div>
+<div id="avatarModal" class="avatar-modal" onclick="closeAvatarModal()">
+  <img id="avatarModalImg" alt="Profile preview">
+</div>
 
   <%- include('./partials/scripts') %>
 </body>
@@ -347,6 +430,18 @@
     setTimeout(() => btn.innerText = oldText, 1500);
   }
 }
+
+function openAvatarModal(src) {
+  const modal = document.getElementById("avatarModal");
+  const img = document.getElementById("avatarModalImg");
+  img.src = src;
+  modal.style.display = "flex";
+}
+
+function closeAvatarModal() {
+  document.getElementById("avatarModal").style.display = "none";
+}
+
 
 </script>
 </html>

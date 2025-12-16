@@ -4,13 +4,10 @@ const User = require('../Models/user');
 const Blog = require('../Models/blog');
 const Comment = require('../Models/comments');
 const sendEmail = require('../utils/sendEmail');
-
+const { isLoggedIn} = require("../middlewares/auth")
 const router = Router();
 
-// Signin page
-router.get('/signin', (req, res) => {
-  return res.render('signin');
-});
+
 
 // Signin logic
 router.get('/signin', (req, res) => {
@@ -48,7 +45,10 @@ router.post('/signin', async (req, res) => {
   }
 });
 
-
+//Edit profile page
+router.get("/profile/edit", isLoggedIn, (req, res) => {
+  res.render("profile_edit", { user: req.user });
+});
 
 // Profile page
 router.get('/profile/:id', async (req, res) => {
@@ -108,8 +108,11 @@ router.post('/signup', async (req, res) => {
 
 // Logout
 router.get('/logout', (req, res) => {
-  res.clearCookie('token').redirect('/');
+  req.session.destroy(() => {
+    res.clearCookie('token').redirect('/');
+  });
 });
+
 
 // Verify GET
 router.get('/verify', async (req, res) => {
@@ -310,4 +313,9 @@ router.post('/reset-password', async (req, res) => {
     });
   }
 });
+
+
+
+
+
 module.exports = router;

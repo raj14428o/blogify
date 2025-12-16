@@ -40,22 +40,22 @@ router.get('/:Id', async (req,res)=>
 
 router.delete('/:id', async (req, res) => {
   try {
-    const blog = await Blog.findById(req.params.id); // ✅ Fetch blog first
+    const blog = await Blog.findById(req.params.id); //  Fetch blog first
     if (!blog) return res.status(404).send('Blog not found');
 
-    // ✅ Delete cover image
+    //  Delete cover image
     const imagePath = path.join(__dirname, '..', 'public', 'uploads', path.basename(blog.coverImageURL));
     fs.unlink(imagePath, (err) => {
       if (err) console.error('Image deletion failed:', err);
     });
 
-    // ✅ Delete comments and blog
+    //  Delete comments and blog
     await Comment.deleteMany({ blogId: req.params.id });
     await Blog.findByIdAndDelete(req.params.id);
 
     res.redirect('/');
   } catch (err) {
-    console.error('Deletion error:', err); // ✅ Log the actual error
+    console.error('Deletion error:', err); //  Log the actual error
     res.status(500).send('Deletion failed');
   }
 });

@@ -6,24 +6,26 @@ const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 
-const Blog = require('./Models/blog');
+const attachUser = require('./middlewares/attachUser');
+const { checkForAuthenthicationCookie } = require('./middlewares/authentication');
 
+const Blog = require('./Models/blog');
 const UserRoute = require("./routes/user");
 const BlogRoute = require("./routes/blog");
-const { checkForAuthenthicationCookie } = require('./middlewares/authentication');
 
 const app = express();
 const PORT = process.env.PORT;
 
+/* ================= DB ================= */
 mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log("MongoDB connected"));
 
-app.set('view engine','ejs');
+/* ================= VIEW ENGINE ================= */
+app.set('view engine', 'ejs');
 app.set('views', path.resolve('./views'));
 
-app.use(express.urlencoded({ extended: false }));
+/* ================= GLOBAL MIDDLEWARE ================= */
 app.use(cookieParser());
-
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret',
@@ -31,10 +33,34 @@ app.use(session({
   saveUninitialized: false,
 }));
 
+/* ================= AUTH (DO NOT CHANGE LOGIC) ================= */
+app.use(attachUser);
 app.use(checkForAuthenthicationCookie('token'));
+
+/* ================= BODY / STATIC ================= */
+app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.resolve('./public')));
 app.use(methodOverride('_method'));
 
+/* ================= NAVBAR DATA ONLY ================= */
+app.use((req, res, next) => {
+  if (req.user) {
+    res.locals.navUser = {
+      id: req.user._id,
+      name: req.user.fullName,
+      avatar: req.user.profileImageUrl
+    };
+  } else {
+    res.locals.navUser = null;
+  }
+  next();
+});
+app.use((req, res, next) => {
+  res.locals.user = req.user || null;
+  next();
+});
+
+/* ================= HOME ================= */
 app.get('/', async (req, res) => {
   const allBlogs = await Blog.find({})
     .populate('createdBy', 'fullName profileImageUrl')
@@ -45,18 +71,22 @@ app.get('/', async (req, res) => {
     ...blog,
     author: {
       fullName: blog.createdBy.fullName,
-      profileImage: blog.createdBy.profileImageUrl 
+      profileImage: blog.createdBy.profileImageUrl
     }
   }));
 
   res.render('Home', {
     blogs,
-    user: req.user,
+    user: req.user, // kept because frontend already depends on it
   });
 });
 
-
+/* ================= ROUTES ================= */
 app.use('/user', UserRoute);
 app.use('/blog', BlogRoute);
 
-app.listen(PORT, () => console.log(`Server started at ${PORT}`));
+/* ================= START ================= */
+app.listen(PORT, () => {
+  console.log(`Server started at ${PORT}`);
+});
+

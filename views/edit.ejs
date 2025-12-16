@@ -3,36 +3,129 @@
 <head>
   <%- include('./partials/head') %>
   <title>Edit Blog</title>
+
+  <style>
+    body {
+      background: #f3f4f6;
+    }
+
+    .blog-card {
+      max-width: 720px;
+      margin: 40px auto;
+      background: #ffffff;
+      padding: 2.5rem;
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    }
+
+    .blog-card h1 {
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .form-label {
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .cover-preview {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      background: #e5e7eb;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      background: linear-gradient(to right, #000, #222);
+      color: white;
+      border: none;
+    }
+
+    .submit-btn:hover {
+      opacity: 0.9;
+    }
+
+    small {
+      color: #6b7280;
+    }
+  </style>
 </head>
+
 <body>
-  <div class="container mt-4">
+  
+  <%- include('./partials/nav') %>
+  <div class="blog-card">
+
     <h1>Edit Blog</h1>
 
-    <!-- ✅ Show current cover image -->
-    <div class="mb-3">
-      <label>Current Cover Image:</label><br>
-      <img src="<%= blog.coverImageURL %>" width="400px" class="img-fluid rounded" alt="Current Cover Image">
-    </div>
+    <!--  Edit form -->
+    <form 
+      action="/blog/<%= blog._id %>/edit" 
+      method="POST" 
+      enctype="multipart/form-data"
+    >
 
-    <!-- ✅ Edit form with file upload -->
-    <form action="/blog/<%= blog._id %>/edit" method="POST" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label for="title">Title</label>
-        <input type="text" name="title" class="form-control" value="<%= blog.title %>" required />
+      <!-- Current Cover -->
+      <div class="mb-4">
+        <label class="form-label">Current Cover Image</label>
+        <img 
+          src="<%= blog.coverImageURL %>" 
+          class="cover-preview" 
+          alt="Current cover"
+        >
       </div>
 
-      <div class="mb-3">
-        <label for="body">Body (Markdown)</label>
-        <textarea name="body" class="form-control" rows="10" required><%= blog.body %></textarea>
+      <!-- Upload New Cover -->
+      <div class="mb-4">
+        <label class="form-label">Change Cover Image</label>
+        <input 
+          type="file" 
+          name="coverImage" 
+          class="form-control" 
+          accept="image/*"
+        >
+        <small>Leave blank to keep current image</small>
       </div>
 
-      <div class="mb-3">
-        <label for="coverImage">Upload New Cover Image</label>
-        <input type="file" name="coverImage" class="form-control" accept="image/*" />
-        <small class="text-muted">Leave blank to keep current image.</small>
+      <!-- Title -->
+      <div class="mb-4">
+        <label class="form-label">Title</label>
+        <input 
+          type="text" 
+          name="title" 
+          class="form-control" 
+          value="<%= blog.title %>" 
+          required
+        >
       </div>
 
-      <button class="btn btn-primary">Update Blog</button>
+      <!-- Body -->
+      <div class="mb-4">
+        <label class="form-label">Body</label>
+        <textarea 
+          name="body" 
+          class="form-control" 
+          rows="10" 
+          required
+        ><%= blog.body %></textarea>
+      </div>
+
+      <button class="submit-btn">
+        Update Blog
+      </button>
+
     </form>
   </div>
 
