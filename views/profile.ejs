@@ -55,6 +55,45 @@
       letter-spacing: -0.02em;
     }
 
+    /* ===== Pill Style Buttons (Option 2) ===== */
+.profile-actions .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-actions .pill-edit {
+  background: #bdc7e6;
+  color: #4338ca;
+}
+
+.profile-actions .pill-share {
+  background: #b7b7b7;
+  color: #374151;
+  border: 1px dashed #d1d5db;
+}
+
+.profile-actions .pill-follow {
+  background: #2563eb;
+  color: white;
+}
+
+.profile-actions .pill-message {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.profile-actions .pill:hover {
+  transform: translateY(-1px);
+}
+
     .profile-email {
       font-size: 0.9rem;
       color: #6b7280;
@@ -197,9 +236,36 @@
               </div>
 
               <div class="profile-actions d-flex gap-2">
-                <button class="btn btn-primary">Follow</button>
-                <button class="btn btn-outline-secondary">Message</button>
-              </div>
+
+  <% if (user && user._id.toString() === profileUser._id.toString()) { %>
+    
+   <a href="/profile/edit" class="pill pill-edit">
+   Edit Profile
+</a>
+
+<button 
+  class="pill pill-share"
+  onclick="shareProfile()"
+>
+   Share Profile
+</button>
+
+
+
+  <% } else { %>
+
+   
+    <button class="btn btn-primary">
+      Follow
+    </button>
+
+    <button class="btn btn-outline-secondary">
+      Message
+    </button>
+
+  <% } %>
+
+</div>
             </div>
 
             <div class="profile-stats">
@@ -211,7 +277,7 @@
         </div>
       </div>
 
-      <!-- 📄 CONTENT -->
+      
       <div class="row g-5">
 
         <!-- 📝 POSTS -->
@@ -266,6 +332,23 @@
 
   <%- include('./partials/scripts') %>
 </body>
+<script>
+ function shareProfile(btn) {
+  if (navigator.share) {
+    navigator.share({
+      title: document.title,
+      text: 'Check out this profile',
+      url: window.location.href
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(window.location.href);
+    const oldText = btn.innerText;
+    btn.innerText = "Copied ✓";
+    setTimeout(() => btn.innerText = oldText, 1500);
+  }
+}
+
+</script>
 </html>
 
 

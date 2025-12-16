@@ -5,58 +5,105 @@
   <title>Create Account</title>
 
   <style>
-    /* Input styling */
-    #fullName,
-    #email,
-    #password {
-      border: 2px solid #000;
-      border-radius: 6px;
+   
+    .auth-wrapper {
+      min-height: calc(100vh - 60px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      padding: 1rem;
+    }
+
+  
+    .auth-card {
+      width: 100%;
+      max-width: 420px;
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .auth-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+   
+    .auth-card input {
+      border: 1.8px solid #d1d5db;
+      border-radius: 8px;
       padding: 12px 14px;
       font-size: 0.95rem;
     }
 
-    #fullName:focus,
-    #email:focus,
-    #password:focus {
-      border-color: #0056b3;
-      box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+    .auth-card input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+ 
+    .auth-card button {
+      width: 100%;
+      padding: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+
+  
+    .auth-footer {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .auth-footer a {
+      text-decoration: none;
+      color: #2563eb;
+      font-weight: 500;
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline;
     }
   </style>
 </head>
 
 <body>
-  <%- include('./partials/nav') %>
+  
 
-  <div class="container mt-5">
-    <div class="mx-auto" style="max-width: 720px;">
+  <div class="auth-wrapper">
+    <div class="auth-card">
 
-      <!-- Heading -->
-      <h3 class="mb-4 fw-semibold">Create your account</h3>
+      <div class="auth-title">Create your account</div>
 
-      <!-- Signup Form -->
       <form action="/user/signup" method="post">
 
-        <!-- Full Name -->
+    
         <div class="mb-3">
           <label for="fullName" class="form-label">Full Name</label>
           <input
             type="text"
-            class="form-control"
             id="fullName"
             name="fullName"
+            class="form-control"
             placeholder="Enter your full name"
             required
           >
         </div>
 
-        <!-- Email -->
+  
         <div class="mb-3">
           <label for="email" class="form-label">Email address</label>
           <input
             type="email"
+            id="email"
             name="email"
             class="form-control"
-            id="email"
             placeholder="Enter your email"
             required
           >
@@ -65,29 +112,38 @@
           </div>
         </div>
 
-        <!-- Password -->
+       
         <div class="mb-4">
           <label for="password" class="form-label">Password</label>
           <input
             type="password"
+            id="password"
             name="password"
             class="form-control"
-            id="password"
             placeholder="Create a password"
             required
           >
         </div>
 
-        <!-- Submit -->
-        <button type="submit" class="btn btn-primary px-4 py-2">
+        <button type="submit" class="btn btn-primary">
           Create Account
         </button>
 
       </form>
+
+   
+      <div class="auth-footer">
+        <span>
+          Already have an account?
+          <a href="/signin">Sign in</a>
+        </span>
+      </div>
+
     </div>
   </div>
 
   <%- include('./partials/scripts') %>
 </body>
 </html>
+
 

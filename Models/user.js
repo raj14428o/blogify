@@ -74,8 +74,8 @@ const userSchema = new Schema(
 },
 
 emailVerificationOTP: {type:String},     
-emailVerificationExpiry: {type:Date}
-
+emailVerificationExpiry: {type:Date},
+otpPurpose: {type: String}
 
     }, { timestamps: true }
 );

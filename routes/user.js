@@ -13,14 +13,22 @@ router.get('/signin', (req, res) => {
 });
 
 // Signin logic
+router.get('/signin', (req, res) => {
+  res.render('signin', { error: null }); 
+});
+
+// Signin logic
 router.post('/signin', async (req, res) => {
-  const { email, password } = req.body;
+  const email = req.body.email.trim().toLowerCase();
+  const password = req.body.password;
+
   try {
     const user = await User.findOne({ email });
-    if (!user) throw new Error();
+    if (!user) {
+      throw new Error('User not registered');
+    }
 
-    const token = await User.matchPassword(email, password); // implement simple equality check
-    if (!token) throw new Error();
+    const token = await User.matchPassword(email, password);
 
     if (!user.isEmailVerified) {
       req.session.verifyEmail = user.email;
@@ -31,10 +39,14 @@ router.post('/signin', async (req, res) => {
 
     return res.cookie('token', token).redirect('/');
   } catch (error) {
-    console.error('Signin failed:', error);
-    return res.render('signin', { error: 'Incorrect Email or Password' });
+    console.error('Signin failed:', error.message);
+
+    return res.render('signin', {
+      error: error.message
+    });
   }
 });
+
 
 
 // Profile page
@@ -100,70 +112,100 @@ router.get('/logout', (req, res) => {
 // Verify GET
 router.get('/verify', async (req, res) => {
   const email = req.session.verifyEmail;
-  if (!email) return res.redirect('/user/signin');
+  const purpose = req.session.verifyPurpose;
+
+  if (!email || !purpose) return res.redirect('/user/signin');
 
   const user = await User.findOne({ email });
   if (!user) return res.redirect('/user/signup');
-  if (user.isEmailVerified) return res.redirect('/');
 
-  // Only generate OTP if none exists or expired
+  // 🚨 Only block if purpose is signup
+  if (purpose === 'signup' && user.isEmailVerified) {
+    return res.redirect('/');
+  }
+
+  // Generate OTP only if expired or not exists
   if (!user.emailVerificationExpiry || Date.now() > user.emailVerificationExpiry) {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('Generated OTP:', otp);
 
-  
     user.emailVerificationOTP = await bcrypt.hash(otp, 10);
     user.emailVerificationExpiry = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    console.log('sending email to:', user.email);
     await sendEmail({
       to: user.email,
-      subject: 'Verify your email',
+      subject:
+        purpose === 'signup'
+          ? 'Verify your email'
+          : 'Reset password OTP',
       text: `Your OTP is ${otp}. It expires in 10 minutes.`,
     });
-
-    console.log('📧 Email sent to:', user.email);
   }
 
   res.render('verify', { email });
 });
+
 
 // Verify POST
 router.post('/verify', async (req, res) => {
   try {
     const { otp } = req.body;
     const email = req.session.verifyEmail;
-    if (!email) return res.redirect('/user/signup');
+    const purpose = req.session.verifyPurpose;
+
+    if (!email || !purpose) {
+      return res.redirect('/user/signin');
+    }
 
     const user = await User.findOne({ email });
     if (!user) return res.redirect('/user/signup');
 
-    if (Date.now() > user.emailVerificationExpiry) {
-      return res.render('verify', { email, error: 'OTP expired' });
+    if (!user.emailVerificationExpiry || Date.now() > user.emailVerificationExpiry) {
+      return res.render('verify', {
+        email,
+        error: 'OTP expired',
+      });
     }
 
     const isValid = await bcrypt.compare(otp, user.emailVerificationOTP);
     if (!isValid) {
-      return res.render('verify', { email, error: 'Invalid OTP' });
+      return res.render('verify', {
+        email,
+        error: 'Invalid OTP',
+      });
     }
 
-    user.isEmailVerified = true;
+    // clear OTP
     user.emailVerificationOTP = undefined;
     user.emailVerificationExpiry = undefined;
-    await user.save();
 
-    const token = await User.matchPassword(email, password);
-    res.cookie('token', token).redirect('/');
+    // 🔀 FLOW CONTROL
+    if (purpose === 'signup') {
+      user.isEmailVerified = true;
+      await user.save();
 
-    delete req.session.verifyEmail;
+      req.session.verifyEmail = null;
+      req.session.verifyPurpose = null;
 
-    return res.redirect('/');
+      return res.redirect('/user/signin');
+    }
+
+    if (purpose === 'forgot-password') {
+      await user.save();
+
+      req.session.resetUserId = user._id;
+      req.session.verifyEmail = null;
+      req.session.verifyPurpose = null;
+
+      return res.redirect('/user/reset-password');
+    }
+
   } catch (err) {
-    console.error(err);
-    res.redirect('/user/signup');
+    console.error('Verify POST error:', err);
+    res.redirect('/user/signin');
   }
 });
+
 
 // Resend OTP
 router.post('/resend-otp', async (req, res) => {
@@ -192,5 +234,78 @@ router.post('/resend-otp', async (req, res) => {
     return res.render('verify', { email: req.body.email, error: 'Failed to resend OTP. Try again later.' });
   }
 });
+router.get('/forgot-password', (req, res) => {
+  res.render('forgot-password');
+});
 
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.render('forgot-password', {
+        error: 'Email not registered',
+      });
+    }
+
+    // mark intent
+    req.session.verifyEmail = email;
+    req.session.verifyPurpose = 'forgot-password';
+
+    return res.redirect('/user/verify');
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.render('forgot-password', {
+      error: 'Something went wrong. Try again.',
+    });
+  }
+});
+
+router.get('/reset-password', (req, res) => {
+  if (!req.session.resetUserId) {
+    return res.redirect('/user/signin');
+  }
+
+  res.render('reset-password');
+});
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { password, confirmPassword } = req.body;
+
+    if (!req.session.resetUserId) {
+      return res.redirect('/user/signin');
+    }
+
+    if (password !== confirmPassword) {
+      return res.render('reset-password', {
+        error: 'Passwords do not match',
+      });
+    }
+
+    if (password.length < 6) {
+      return res.render('reset-password', {
+        error: 'Password must be at least 6 characters long',
+      });
+    }
+
+    const user = await User.findById(req.session.resetUserId);
+    if (!user) {
+      return res.redirect('/user/signin');
+    }
+
+    user.password = password;
+    await user.save(); // pre("save") will hash it
+
+    req.session.resetUserId = null;
+
+    return res.redirect('/user/signin');
+
+  } catch (err) {
+    console.error('Reset password error:', err);
+    return res.render('reset-password', {
+      error: 'Something went wrong. Try again.',
+    });
+  }
+});
 module.exports = router;
