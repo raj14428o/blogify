@@ -1,58 +1,283 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  .messages-page {
-    max-width: 420px;
-    margin: 20px auto;
+ html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #f3f4f6, #eef2f7);
+}
+
+
+
+/* Search box */
+.search-box input {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+.search-box input:focus {
+  border-color: #000000;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
+}
+
+/* Section titles */
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+  margin: 14px 0 8px;
+}
+
+/* User list containers */
+.online-users,
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* User item */
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-radius: 10px;
+  background: #fafafa;
+  transition: all 0.25s ease;
+}
+.user-item:hover {
+  background: #f0f6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* Profile image */
+.user-item img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #eee;
+  transition: border-color 0.3s ease;
+}
+.user-item:hover img {
+  border-color: #4a90e2;
+}
+
+/* User name */
+.user-item span {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Online state */
+.user-item.online {
+  border-left: 4px solid #4caf50;
+  background: #f9fff9;
+}
+.user-item.online span {
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+
+
+  #searchModal {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    padding: 20px;
+    width: 400px;
+    max-height: 70vh;
+    overflow-y: auto;
+    z-index: 1000;
+  }
+  #searchModal.hidden { display: none; }
+  #searchResults .user-item { margin-bottom: 10px; }
+.messages-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  height: 100vh;
+  width: 100vw;
+  gap: 16px;              /* small gap between panels */
+  padding: 16px 20px;    /* top-bottom + left-right spacing */
+  box-sizing: border-box;
+}
+
+
+/* LEFT PANEL */
+.messages-left {
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+
+/* RIGHT PANEL */
+.messages-right {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  padding: 20px;
+  min-height: 70vh;
+}
+
+.chat-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  text-align: center;
+  gap: 8px;
+}
+
+.chat-empty h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.chat-empty p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+
+.messages-left,
+.messages-right {
+  background: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #f9fafb 100%
+  );
+  border-radius: 14px;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.08);
+  padding: 18px;
+}
+
+
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+
+.mobile-topbar input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 16px;
+}
+
+.icon-btn {
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* SHOW only on mobile */
+@media (max-width: 900px) {
+
+  /* kill grid completely */
+  .messages-layout {
+    display: block;
+    height: 100vh;
   }
 
-  .search-box input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 12px;
+  /* right pane = full screen */
+  .messages-right {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    position: relative;
+    z-index: 1;
   }
 
-  .online-users,
-  .user-list {
+  /* left pane = hidden drawer */
+  .messages-left {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80%;
+    max-width: 320px;
+    height: 100vh;
+    background: white;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 3000;
+    border-radius: 0;
+  }
+
+  .messages-left.open {
+    transform: translateX(0);
+  }
+
+  /* topbar always clickable */
+  .mobile-topbar {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
+    position: relative;
+    z-index: 4000;
   }
+}
 
-  .section-title {
-    font-size: 13px;
-    color: #666;
-    margin: 10px 0 6px;
-  }
 
-  .user-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px;
-    cursor: pointer;
-    border-radius: 6px;
-  }
+#searchBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 5000;
+}
 
-  .user-item:hover {
-    background: #f2f2f2;
-  }
 
-  .user-item img {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-  }
 
-  .user-item.online {
-    border-left: 4px solid green;
-    background: #f6fff6;
-  }
+.hidden {
+  display: none;
+}
 
-  .hidden {
-    display: none;
-  }
+
+.section-title {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 12px;
+}
+#sidebarBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  z-index: 2500;
+}
+
+#sidebarBackdrop.hidden {
+  display: none;
+}
+
 </style>
-
-<div class="messages-page">
+<div class="messages-layout">
+ <!-- LEFT PANEL -->
+<div class="messages-left">
 
   <!-- Search -->
   <div class="search-box">
@@ -63,30 +288,63 @@
   <div class="section-title">Online</div>
   <div class="online-users" id="onlineUsers"></div>
 
-  <!-- All users -->
-  <div class="section-title">All users</div>
-  <div class="user-list" id="userList">
-    <% following.forEach(u => { %>
-      <div class="user-item"
-           data-id="<%= u._id %>"
-           data-name="<%= u.fullName.toLowerCase() %>">
+ <!-- Following -->
+<div class="section-title">Following</div>
+<div class="user-list" id="followingList">
+  <% following.forEach(u => { %>
+    <div class="user-item"
+         data-id="<%= u._id %>"
+         data-name="<%= u.fullName.toLowerCase() %>">
+      <img src="<%= u.profileImageUrl %>" />
+      <span><%= u.fullName %></span>
+    </div>
+  <% }) %>
+</div>
 
-        <img src="<%= u.profileImageUrl %>" />
-        <span><%= u.fullName %></span>
-      </div>
-    <% }) %>
+</div>
+
+<!-- RIGHT PANEL -->
+  <div class="messages-right">
+    <div class="mobile-topbar">
+  <button id="openSidebar" class="icon-btn">☰</button>
+  <input type="text" id="topUserSearch" placeholder="Search users..." />
+</div>
+
+    <div class="chat-empty">
+      <h3>Select a conversation</h3>
+      <p>Choose a user to start chatting</p>
+    </div>
   </div>
 
 </div>
+
+<!-- Search Backdrop -->
+<div id="searchBackdrop" class="hidden">
+  <div id="searchModal">
+    <div class="modal-content">
+      <h3>Search Results</h3>
+      <div id="searchResults"></div>
+      <button id="showMoreBtn" class="hidden">Show More</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar Backdrop (SEPARATE) -->
+<div id="sidebarBackdrop" class="hidden"></div>
+
+
+
 <%- include("./partials/socket") %>
+
 <script>
   const socket = window.appSocket;
 
   const userItems = Array.from(document.querySelectorAll(".user-item"));
   const onlineContainer = document.getElementById("onlineUsers");
-  const allUsersContainer = document.getElementById("userList");
+  const allUsersContainer = document.getElementById("followingList");
   const searchInput = document.getElementById("userSearch");
-
+  const topSearchInput = document.getElementById("topUserSearch");
+  
   // -----------------------------
   // INITIAL SNAPSHOT
   // -----------------------------
@@ -97,8 +355,12 @@ socket.on("user-updated", ({ userId, fullName, profileImageUrl }) => {
   const item = document.querySelector(`.user-item[data-id="${userId}"]`);
   if (!item) return;
 
-  item.querySelector("span").innerText = fullName + "?v=" + Date.now();
- item.querySelector("img").src = profileImageUrl + "?v=" + Date.now();
+item.querySelector("span").innerText = fullName;
+
+// cache bust only image
+item.querySelector("img").src =
+  profileImageUrl + "?v=" + Date.now();
+
 
 });
 
@@ -144,15 +406,26 @@ socket.on("user-updated", ({ userId, fullName, profileImageUrl }) => {
   // -----------------------------
   // SEARCH
   // -----------------------------
-  searchInput.addEventListener("input", (e) => {
-    const value = e.target.value.toLowerCase();
+  let searchTimeout;
+[topSearchInput, searchInput].forEach(input => {
+  if (!input) return;
 
-    userItems.forEach(item => {
-      item.style.display =
-        item.dataset.name.includes(value) ? "flex" : "none";
-    });
+  input.addEventListener("input", (e) => {
+    clearTimeout(searchTimeout);
+    const q = e.target.value.trim();
+
+   if (q.length < 2) {
+  searchBackdrop.classList.add("hidden");
+  return;
+}
+
+    searchTimeout = setTimeout(async () => {
+      const res = await fetch(`/messages/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      openSearchModal(data.users);
+    }, 300);
   });
-
+});
   // -----------------------------
   // NAVIGATE TO CHAT
   // -----------------------------
@@ -161,5 +434,64 @@ socket.on("user-updated", ({ userId, fullName, profileImageUrl }) => {
       window.location.href = `/messages/${item.dataset.id}`;
     });
   });
+const searchBackdrop = document.getElementById("searchBackdrop");
+const searchResults = document.getElementById("searchResults");
+const showMoreBtn = document.getElementById("showMoreBtn");
+
+function openSearchModal(users) {
+  searchResults.innerHTML = "";
+
+  if (!users || users.length === 0) {
+    searchResults.innerHTML = "<p style='color:#666'>No users found</p>";
+  } else {
+    users.forEach(u => {
+      const div = document.createElement("div");
+      div.className = "user-item";
+      div.innerHTML = `
+        <img src="${u.profileImageUrl}">
+        <span>${u.fullName}</span>
+      `;
+      div.onclick = () => {
+        window.location.href = `/messages/${u._id}`;
+      };
+      searchResults.appendChild(div);
+    });
+  }
+
+  searchBackdrop.classList.remove("hidden");
+}
+
+
+function closeSearchModal() {
+  searchBackdrop.classList.add("hidden");
+    // Clear inputs
+  if (searchInput) searchInput.value = "";
+  if (topSearchInput) topSearchInput.value = "";
+
+  // Clear results
+  searchResults.innerHTML = "";
+}
+
+/* close when clicking outside modal */
+searchBackdrop.addEventListener("click", (e) => {
+  if (e.target === searchBackdrop) {
+    closeSearchModal();
+  }
+});
+
+const sidebar = document.querySelector(".messages-left");
+const openBtn = document.getElementById("openSidebar");
+const backdrop = document.getElementById("sidebarBackdrop");
+
+openBtn.addEventListener("click", () => {
+  sidebar.classList.add("open");
+  backdrop.classList.remove("hidden");
+});
+
+backdrop.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  backdrop.classList.add("hidden");
+});
+
 </script> 
 

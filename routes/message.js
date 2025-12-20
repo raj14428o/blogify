@@ -11,13 +11,36 @@ router.get("/", async (req, res) => {
     .lean();
 
   res.render("messages", {
-    following: user.following,   // ✅ IMPORTANT
+    following: user.following,   //  IMPORTANT
     user: req.user
   });
 });
 
 
 // Individual chat page
+
+//search users to message
+router.get("/search", async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ users: [] });
+  }
+
+  const q = req.query.q?.trim();
+  if (!q || q.length < 2) {
+    return res.json({ users: [] });
+  }
+
+  const users = await User.find({
+    _id: { $ne: req.user._id },
+    fullName: { $regex: q, $options: "i" }
+  })
+    .select("_id fullName profileImageUrl")
+    .limit(10)
+    .lean();
+
+  res.json({ users });
+});
+
 router.get("/:userId", async (req, res) => {
   if (!req.user) return res.redirect("/user/signin");
 
@@ -32,5 +55,7 @@ router.get("/:userId", async (req, res) => {
     user: req.user
   });
 });
+
+
 
 module.exports = router;
