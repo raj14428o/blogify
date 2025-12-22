@@ -18,7 +18,7 @@ const UserRoute = require("./routes/user");
 const BlogRoute = require("./routes/blog");
 const followApiRoutes = require("./routes/follow");
 const MessageRoute = require("./routes/message");
-
+const deviceRoutes = require("./routes/device");
 const app = express();
 const PORT = process.env.PORT;
 const server = http.createServer(app);
@@ -132,7 +132,8 @@ app.use(session({
 app.use(attachUser);
 
 /* ================= BODY / STATIC ================= */
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.resolve('./public')));
 app.use(methodOverride('_method'));
 
@@ -177,6 +178,7 @@ app.get('/', async (req, res) => {
 
 /* ================= ROUTES ================= */
 app.use("/api", followApiRoutes);
+app.use("/api/devices", deviceRoutes);
 app.use('/user', UserRoute);
 app.use('/blog', BlogRoute);
 app.use("/messages", MessageRoute);

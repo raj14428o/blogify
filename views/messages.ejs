@@ -1,287 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
- html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  background: linear-gradient(180deg, #f3f4f6, #eef2f7);
-}
-
-
-
-/* Search box */
-.search-box input {
-  width: 100%;
-  padding: 12px 14px;
-  margin-bottom: 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-.search-box input:focus {
-  border-color: #000000;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
-}
-
-/* Section titles */
-.section-title {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #999;
-  margin: 14px 0 8px;
-}
-
-/* User list containers */
-.online-users,
-.user-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-/* User item */
-.user-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  cursor: pointer;
-  border-radius: 10px;
-  background: #fafafa;
-  transition: all 0.25s ease;
-}
-.user-item:hover {
-  background: #f0f6ff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-}
-
-/* Profile image */
-.user-item img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #eee;
-  transition: border-color 0.3s ease;
-}
-.user-item:hover img {
-  border-color: #4a90e2;
-}
-
-/* User name */
-.user-item span {
-  font-size: 14px;
-  font-weight: 500;
-  color: #333;
-}
-
-/* Online state */
-.user-item.online {
-  border-left: 4px solid #4caf50;
-  background: #f9fff9;
-}
-.user-item.online span {
-  color: #2e7d32;
-  font-weight: 600;
-}
-
-
-
-  #searchModal {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-    padding: 20px;
-    width: 400px;
-    max-height: 70vh;
-    overflow-y: auto;
-    z-index: 1000;
-  }
-  #searchModal.hidden { display: none; }
-  #searchResults .user-item { margin-bottom: 10px; }
-.messages-layout {
-  display: grid;
-  grid-template-columns: 340px 1fr;
-  height: 100vh;
-  width: 100vw;
-  gap: 16px;              /* small gap between panels */
-  padding: 16px 20px;    /* top-bottom + left-right spacing */
-  box-sizing: border-box;
-}
-
-
-/* LEFT PANEL */
-.messages-left {
-  background: #ffffff;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  height: 95%;  
-}
-
-
-
-
-/* RIGHT PANEL */
-.messages-right {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-  padding: 20px;
-
-
-  display: flex;
-  flex-direction: column;
-  height: 95%;          
-  overflow: hidden;    
-}
-
-
-.chat-empty {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #6b7280;
-  text-align: center;
-  gap: 8px;
-}
-
-.chat-empty h3 {
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-}
-
-.chat-empty p {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-
-.messages-left,
-.messages-right {
-  background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #f9fafb 100%
-  );
-  border-radius: 14px;
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.08);
-  padding: 18px;
-}
-
-
-.mobile-topbar {
-  display: none;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
-}
-
-.mobile-topbar input {
-  flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 16px;
-}
-
-.icon-btn {
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-/* SHOW only on mobile */
-@media (max-width: 900px) {
-
-  /* kill grid completely */
-  .messages-layout {
-    display: block;
-    height: 100vh;
-  }
-
-  /* right pane = full screen */
-  .messages-right {
-    width: 100vw;
-    height: 100vh;
-    border-radius: 0;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* left pane = hidden drawer */
-  .messages-left {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 80%;
-    max-width: 320px;
-    height: 100vh;
-    background: white;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 3000;
-    border-radius: 0;
-  }
-
-  .messages-left.open {
-    transform: translateX(0);
-  }
-
-  /* topbar always clickable */
-  .mobile-topbar {
-    display: flex;
-    position: relative;
-    z-index: 4000;
-  }
-}
-
-
-#searchBackdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  z-index: 5000;
-}
-
-
-
-.hidden {
-  display: none;
-}
-
-
-.section-title {
-  border-top: 1px solid #f1f5f9;
-  padding-top: 12px;
-}
-#sidebarBackdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.25);
-  z-index: 2500;
-}
-
-#sidebarBackdrop.hidden {
-  display: none;
-}
-
-</style>
+<link rel="stylesheet" href="/css/messages.css">
 <div class="messages-layout">
  <!-- LEFT PANEL -->
 <div class="messages-left">
@@ -348,6 +66,146 @@
 <%- include("./partials/socket") %>
 
 <script>
+/* ===============================
+   DEVICE KEY INITIALIZATION
+================================ */
+
+// Open IndexedDB
+function openKeyDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("secure-chat-db", 1);
+
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore("keys");
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+// Get keys
+async function getStoredKeys() {
+  const db = await openKeyDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction("keys", "readonly");
+    const store = tx.objectStore("keys");
+    const req = store.get("device");
+    req.onsuccess = () => resolve(req.result || null);
+  });
+}
+
+// Save keys
+async function saveKeys(keys) {
+  const db = await openKeyDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction("keys", "readwrite");
+    const store = tx.objectStore("keys");
+    store.put(keys, "device");
+    tx.oncomplete = resolve;
+  });
+}
+
+async function generateKeyPair() {
+  const keyPair = await crypto.subtle.generateKey(
+    {
+      name: "ECDH",
+      namedCurve: "P-256",   // ✅ browser-supported
+    },
+    true,
+    ["deriveKey", "deriveBits"]
+  );
+
+  return {
+    publicKey: await crypto.subtle.exportKey("jwk", keyPair.publicKey),
+    privateKey: await crypto.subtle.exportKey("jwk", keyPair.privateKey),
+  };
+}
+
+
+// MAIN initializer
+async function initDeviceKeys() {
+  let keys = await getStoredKeys();
+
+  if (!keys) {
+    const deviceId = crypto.randomUUID();
+    const { publicKey, privateKey } = await generateKeyPair();
+
+    keys = { deviceId, publicKey, privateKey };
+    await saveKeys(keys);
+
+    // Register public key with backend
+    await fetch("/api/devices/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, publicKey }),
+    });
+
+    console.log(" Device keys generated");
+  } else {
+    console.log(" Device keys loaded");
+  }
+
+  // expose globally for later steps
+  window.deviceKeys = keys;
+}
+
+(async () => {
+  await initDeviceKeys();
+})();
+
+async function importPrivateKey(jwk) {
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDH", namedCurve: "P-256" },
+    false,
+    ["deriveBits"]
+  );
+}
+
+async function importPublicKey(jwk) {
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDH", namedCurve: "P-256" },
+    false,
+    []
+  );
+}
+
+async function deriveSharedSecret(otherUserId) {
+  // 1. fetch other user's public key
+  const res = await fetch(`/api/devices/public/${otherUserId}`);
+  const data = await res.json();
+
+  if (!data.publicKey) {
+    throw new Error("Public key not found");
+  }
+
+  // 2. import keys
+  const myPrivateKey = await importPrivateKey(
+    window.deviceKeys.privateKey
+  );
+
+  const otherPublicKey = await importPublicKey(
+    data.publicKey
+  );
+
+  // 3. derive shared secret bits
+  const sharedSecret = await crypto.subtle.deriveBits(
+    {
+      name: "ECDH",
+      public: otherPublicKey,
+    },
+    myPrivateKey,
+    256
+  );
+
+  return sharedSecret; // ArrayBuffer
+}
+
+
   const socket = window.appSocket;
 
   const userItems = Array.from(document.querySelectorAll(".user-item"));
@@ -388,7 +246,6 @@ item.querySelector("img").src =
     }
 
     if (!shouldBeOnline && isOnline) {
-      item.classList.remove("online");
       allUsersContainer.appendChild(item);
     }
   });
@@ -540,7 +397,81 @@ socket.on("user-last-seen", ({ userId, lastSeen }) => {
     updateChatHeaderStatus(`Last seen at ${time}`);
   }
 });
+let sharedSecret = null;
+
+(async () => {
+  if (!activeChatUserId) return;
+
+  try {
+    sharedSecret = await deriveSharedSecret(activeChatUserId);
+    console.log("🔐 Shared secret derived", sharedSecret);
+  } catch (err) {
+    console.error("Shared secret error:", err);
+  }
+})();
+
+//encryption and decryption functions
+
+async function deriveAESKey(sharedSecret) {
+  return crypto.subtle.importKey(
+    "raw",
+    sharedSecret,               // ArrayBuffer from ECDH
+    { name: "AES-GCM" },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptMessage(plainText, sharedSecret) {
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // nonce
+  const key = await deriveAESKey(sharedSecret);
+
+  const encoded = new TextEncoder().encode(plainText);
+
+  const encryptedBuffer = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encoded
+  );
+
+  return {
+    ciphertext: btoa(
+      String.fromCharCode(...new Uint8Array(encryptedBuffer))
+    ),
+    nonce: btoa(
+      String.fromCharCode(...iv)
+    ),
+  };
+}
+
+async function decryptMessage(ciphertextB64, nonceB64, sharedSecret) {
+  const key = await deriveAESKey(sharedSecret);
+
+  const ciphertext = Uint8Array.from(
+    atob(ciphertextB64),
+    c => c.charCodeAt(0)
+  );
+
+  const iv = Uint8Array.from(
+    atob(nonceB64),
+    c => c.charCodeAt(0)
+  );
+
+  const decryptedBuffer = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    ciphertext
+  );
+
+  return new TextDecoder().decode(decryptedBuffer);
+}
+
+window.encryptMessage = encryptMessage;
+window.decryptMessage = decryptMessage;
 
 
 </script> 
+
+<script src="/js/chatCrypto.js"></script>
+
 
