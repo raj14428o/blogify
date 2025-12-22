@@ -94,7 +94,7 @@ router.post(
         { new: true }
       );
 
-      // 🔥 RE-ISSUE JWT with updated data
+      //  RE-ISSUE JWT with updated data
       const token = createTokenForUser(user.toObject());
       res.cookie("token", token);
 

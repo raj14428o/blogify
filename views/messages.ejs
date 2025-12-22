@@ -84,27 +84,27 @@ function openKeyDB() {
   });
 }
 
-// Get keys
-async function getStoredKeys() {
+async function getStoredKey(key) {
   const db = await openKeyDB();
   return new Promise((resolve) => {
     const tx = db.transaction("keys", "readonly");
     const store = tx.objectStore("keys");
-    const req = store.get("device");
+    const req = store.get(key);
     req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
   });
 }
 
-// Save keys
-async function saveKeys(keys) {
+async function saveStoredKey(key, value) {
   const db = await openKeyDB();
   return new Promise((resolve) => {
     const tx = db.transaction("keys", "readwrite");
     const store = tx.objectStore("keys");
-    store.put(keys, "device");
+    store.put(value, key);
     tx.oncomplete = resolve;
   });
 }
+
 
 async function generateKeyPair() {
   const keyPair = await crypto.subtle.generateKey(
@@ -122,68 +122,62 @@ async function generateKeyPair() {
   };
 }
 
-let deviceKeyPromise = null;
+// ------------------------------------
+// DEVICE KEY PROMISE MAP (per user)
+// ------------------------------------
+const deviceKeyPromiseMap = {};
 
-async function initDeviceKeys() {
-  if (deviceKeyPromise) return deviceKeyPromise;
+async function initDeviceKeys(userId) {
+  if (deviceKeyPromiseMap[userId]) {
+    return deviceKeyPromiseMap[userId];
+  }
 
-  deviceKeyPromise = (async () => {
-    let keys = await getStoredKeys();
+  deviceKeyPromiseMap[userId] = (async () => {
+
+    //  Get or create DEVICE ID (browser-wide)
+    let deviceId = await getStoredKey("device_id");
+    if (!deviceId) {
+      deviceId = crypto.randomUUID();
+      await saveStoredKey("device_id", deviceId);
+    }
+
+    // Get USER-SCOPED keys
+    let keys = await getStoredKey(`keys:${userId}`);
+
     if (!keys) {
-      const deviceId = crypto.randomUUID();
       const { publicKey, privateKey } = await generateKeyPair();
+
       keys = { deviceId, publicKey, privateKey };
-      await saveKeys(keys);
+      await saveStoredKey(`keys:${userId}`, keys);
 
       await fetch("/api/devices/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deviceId, publicKey }),
+        body: JSON.stringify({ userId, deviceId, publicKey }),
       });
+
+      console.log(" New keypair generated for user:", userId);
+    } else {
+      console.log("Existing keypair loaded for user:", userId);
     }
+
     window.deviceKeys = keys;
     return keys;
   })();
 
-  return deviceKeyPromise;
+  return deviceKeyPromiseMap[userId];
 }
 
-// MAIN initializer
-async function initDeviceKeys() {
-  let keys = await getStoredKeys();
 
-  if (!keys) {
-    const deviceId = crypto.randomUUID();
-    const { publicKey, privateKey } = await generateKeyPair();
-
-    keys = { deviceId, publicKey, privateKey };
-    await saveKeys(keys);
-
-    // Register public key with backend
-    await fetch("/api/devices/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ deviceId, publicKey }),
-    });
-
-    console.log(" Device keys generated");
-  } else {
-    console.log(" Device keys loaded");
-  }
-
-  // expose globally for later steps
-  window.deviceKeys = keys;
-}
-
+const myUserId = "<%= user._id %>";
 window.messagingReady = (async () => {
-  await initDeviceKeys();
+  await initDeviceKeys(myUserId);
 
 
   if (activeChatUserId) {
     window.sharedSecret = await deriveSharedSecret(activeChatUserId);
     socket.emit("join-room", "<%= roomId %>");
   }
-
   return true;
 })();
 
