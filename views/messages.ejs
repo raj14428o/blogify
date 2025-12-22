@@ -384,7 +384,7 @@ function updateChatHeaderStatus(text, isOnline = false) {
 socket.on("user-online", (userId) => {
   if (!activeChatUserId) return;
   if (userId === activeChatUserId) {
-    updateChatHeaderStatus("Online");
+    updateChatHeaderStatus("Online",true);
   }
 });
 socket.on("user-last-seen", ({ userId, lastSeen }) => {
