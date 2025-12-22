@@ -272,9 +272,16 @@ router.post('/signup', async (req, res) => {
 });
 
 // Logout
-router.get('/logout', (req, res) => {
+router.get('/logout', async (req, res) => {
+  if (req.user) {
+    await User.findByIdAndUpdate(req.user._id, {
+      activeSessionId: null,
+    });
+  }
+
   req.session.destroy(() => {
-    res.clearCookie('token').redirect('/');
+    res.clearCookie("token");
+    res.redirect("/user/signin");
   });
 });
 

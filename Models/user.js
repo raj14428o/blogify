@@ -77,6 +77,10 @@ const userSchema = new Schema(
             type: Date,
             default: null
         },
+        activeSessionId: {
+  type: String,
+  default: null
+},
         isEmailVerified: {
   type: Boolean,
   default: false
@@ -118,11 +122,15 @@ userSchema.static("matchPassword", async function (email, password) {
 
     if (hashedPassword !== userProvidedHash) throw new Error('Incorrect Password');
 
+    const sessionId = crypto.randomUUID();
+    user.activeSessionId = sessionId;
+    await user.save();
+
     // Convert to plain object & hide sensitive fields
     const userObj = user.toObject();
 
 
-    return token = createTokenForUser(userObj);
+    return token = createTokenForUser(userObj, sessionId);
 });
 
 const User = model('user', userSchema);

@@ -12,7 +12,6 @@ const offlineTimers = new Map();
 const User = require("./Models/user");
 
 const attachUser = require('./middlewares/attachUser');
-const { checkForAuthenthicationCookie } = require('./middlewares/authentication');
 
 const Blog = require('./Models/blog');
 const UserRoute = require("./routes/user");
@@ -131,7 +130,6 @@ app.use(session({
 
 /* ================= AUTH (DO NOT CHANGE LOGIC) ================= */
 app.use(attachUser);
-app.use(checkForAuthenthicationCookie('token'));
 
 /* ================= BODY / STATIC ================= */
 app.use(express.urlencoded({ extended: false }));

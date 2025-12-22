@@ -1,6 +1,7 @@
-const {validateToken} = require ('../services/authentication')
+const User = require("../Models/user");
+const { validateToken } = require("../services/authentication");
 
-module.exports = function attachUser(req, res, next) {
+module.exports = async function attachUser(req, res, next) {
   const token = req.cookies?.token;
 
   if (!token) {
@@ -11,17 +12,31 @@ module.exports = function attachUser(req, res, next) {
   try {
     const payload = validateToken(token);
 
-    // Attach ONLY what you need
+    const user = await User.findById(payload._id);
+    if (!user) {
+      res.clearCookie("token");
+      req.user = null;
+      return next();
+    }
+
+  
+    if (user.activeSessionId !== payload.sessionId) {
+      res.clearCookie("token");
+      return res.redirect("/user/login");
+    }
+
+    // Attach safe user object
     req.user = {
-      _id: payload._id,
-      email: payload.email,
-      profileImageUrl: payload.profileImageUrl,
-      role: payload.role
+      _id: user._id,
+      email: user.email,
+      profileImageUrl: user.profileImageUrl,
+      role: user.role,
     };
 
+    return next();
   } catch (err) {
+    res.clearCookie("token");
     req.user = null;
   }
-
-  next();
 };
+

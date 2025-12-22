@@ -1,15 +1,18 @@
 const JWT = require('jsonwebtoken');
 
-const secret = "$raj@17896hd";
+const secret = process.env.JWT_SECRET;
 
-function createTokenForUser(user)
+const crypto = require('crypto');
+
+function createTokenForUser(user,sessionId)
 {
     const payload =
     {
         _id:user._id,
         email:user.email,
         profileImageUrl: user.profileImageUrl,
-        role:user.role
+        role:user.role,
+        sessionId: sessionId,
     }
     const token = JWT.sign(payload,secret);
     return token;
