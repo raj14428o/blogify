@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <%- include('./partials/head') %>
+    <title>
+      <%= profileUser.fullName %>'s Profile
+    </title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Primary UI Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Comments Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+      /* ===== Base Reset ===== */
+      html,
+      body {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #111827;
+        background: #f5f6f8;
+      }
+
+      /* ===== Page Wrapper ===== */
+      .profile-page {
+        background: #ffffff;
+        width: 100vw;
+        min-height: 100vh;
+        padding: 2.5rem 3rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      }
+
+      /* ===== Profile Header ===== */
+      .profile-header {
+        padding-bottom: 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        margin-bottom: 2.5rem;
+      }
+
+      .profile-avatar-lg {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: #e5e7eb;
+      }
+
+      .profile-name {
+        font-size: 1.9rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      /* ===== Pill Style Buttons (Option 2) ===== */
+      .profile-actions .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .profile-actions .pill-edit {
+        background: #bdc7e6;
+        color: #4338ca;
+      }
+
+      .profile-actions .pill-share {
+        background: #b7b7b7;
+        color: #374151;
+        border: 1px dashed #d1d5db;
+      }
+
+      .pill-follow {
+        background: #2563eb;
+        color: rgb(222, 222, 222);
+      }
+
+      .pill-message {
+        background: #d6d7d8;
+        color: #343d4c;
+      }
+
+      .profile-actions .pill:hover {
+        transform: translateY(-1px);
+      }
+
+      .profile-email {
+        font-size: 0.9rem;
+        color: #6b7280;
+      }
+
+      .profile-actions button {
+        font-size: 0.95rem;
+        padding: 10px 22px;
+        border-radius: 10px;
+        font-weight: 600;
+        min-width: 120px;
+      }
+
+      .profile-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        /* 🔑 fixes overflow */
+      }
+
+      /* ===== Stats ===== */
+      .profile-stats {
+        display: flex;
+        gap: 3rem;
+        margin-top: 1.25rem;
+      }
+
+      .profile-stats span {
+        display: flex;
+        flex-direction: column;
+        font-size: 0.9rem;
+        color: #6b7280;
+      }
+
+      .profile-stats span strong {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        line-height: 1.1;
+      }
+
+      /* ===== Sections ===== */
+      .content-section {
+        padding: 1.5rem 0;
+      }
+
+      .section-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 1.2rem;
+        letter-spacing: -0.01em;
+      }
+
+      /* ===== Posts Section ===== */
+      .blogs-section {
+        border-left: 4px solid #2563eb;
+        padding-left: 1.5rem;
+      }
+
+      .blogs-section .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+      }
+
+      .profile-blog-card {
+        display: flex;
+        gap: 1.25rem;
+        align-items: center;
+        padding: 1.1rem 0;
+        border-bottom: 1px solid #eef2f7;
+      }
+
+      .profile-blog-card:last-child {
+        border-bottom: none;
+      }
+
+      .profile-blog-card img {
+        width: 110px;
+        height: 75px;
+        border-radius: 10px;
+        object-fit: cover;
+        background-color: #f1f3f5;
+      }
+
+      .profile-blog-card a {
+        text-decoration: none;
+        color: #1d4ed8;
+        font-weight: 600;
+      }
+
+      .profile-blog-card a:hover {
+        text-decoration: underline;
+      }
+
+      /* ===== Comments Section ===== */
+      .comments-section {
+        border-left: 4px solid #10b981;
+        padding-left: 1.25rem;
+      }
+
+      .comments-section .section-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #374151;
+      }
+
+      .comment-item {
+        font-size: 0.92rem;
+        line-height: 1.5;
+        color: #374151;
+        margin-bottom: 1.25rem;
+      }
+
+      .comment-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .comment-item a {
+        font-weight: 500;
+      }
+
+      /* Scroll ONLY content, not titles */
+      .blogs-scroll,
+      .comments-scroll {
+        max-height: calc(100vh - 330px);
+        overflow-y: auto;
+        padding-right: 6px;
+        scroll-behavior: smooth;
+      }
+
+      /* Sticky titles */
+      .blogs-section .section-title,
+      .comments-section .section-title {
+        position: sticky;
+        top: 0;
+        background: #ffffff;
+        z-index: 10;
+        padding: 0.6rem 0;
+      }
+
+ 
+      .blogs-scroll::-webkit-scrollbar,
+      .comments-scroll::-webkit-scrollbar {
+        width: 0px;
+      }
+
+      .blogs-scroll {
+        scrollbar-width: none;
+      }
+
+      .comments-scroll {
+        scrollbar-width: none;
+      }
+
+      .profile-actions .btn,
+      .profile-actions .pill {
+        min-width: 120px;
+        justify-content: center;
+      }
+
+
+      @media (max-width: 500px) {
+
+        /* Make the container flexible */
+        .profile-header .col {
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Default order */
+        .profile-name {
+          order: 1;
+        }
+
+        .profile-email {
+          order: 2;
+        }
+
+        /* Stats come BEFORE actions */
+        .profile-stats {
+          order: 3;
+          margin-top: 1rem;
+        }
+
+        /* Actions move BELOW stats */
+        .profile-actions {
+          order: 4;
+          width: 100%;
+          margin-top: 1rem;
+          flex-wrap: wrap;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        /* Mobile-friendly buttons */
+        .profile-actions .pill,
+        .profile-actions button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      /* ===== FIX FAT MOBILE BUTTONS ===== */
+      @media (max-width: 500px) {
+
+        .profile-actions .pill,
+        .profile-actions button {
+          height: 42px;
+          /* lock height */
+          padding: 0 18px;
+          /* horizontal only */
+          line-height: 42px;
+          /* vertical centering */
+          white-space: nowrap;
+          /* prevent wrapping */
+          border-radius: 999px;
+        }
+      }
+
+      /* ===== Avatar Click Preview ===== */
+      .clickable-avatar {
+        cursor: pointer;
+      }
+
+      .avatar-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.75);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+
+      .avatar-modal img {
+        max-width: 90%;
+        max-height: 90%;
+        border-radius: 14px;
+        object-fit: contain;
+        background: transparent;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: none;
+        cursor: pointer;
+      }
+
+      .row.g-5 {
+        --bs-gutter-x: 0;
+      }
+
+      a.btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        /* removes underline */
+        line-height: normal;
+        /* fixes vertical alignment */
+      }
+    </style>
+</head>
+
+<body>
+  <%- include('./partials/nav') %>
+
+    <div class="container-fluid p-0 m-0">
+      <div class="profile-page">
+
+        <!-- 👤 PROFILE HEADER -->
+        <div class="profile-header">
+          <div class="row align-items-center">
+            <div class="col-auto">
+              <img src="<%= profileUser.profileImageUrl %>" alt="Profile Avatar"
+                class="profile-avatar-lg clickable-avatar" onclick="openAvatarModal(this.src)">
+            </div>
+
+            <div class="col">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="profile-name">
+                    <%= profileUser.fullName %>
+                  </div>
+                  <div class="profile-email">
+                    <%= profileUser.email %>
+                  </div>
+                </div>
+
+                <div class="profile-actions d-flex gap-2">
+
+                  <% if (user && user._id.toString()===profileUser._id.toString()) { %>
+
+                    <a href="/user/profile/edit" class="pill pill-edit">
+                      Edit Profile
+                    </a>
+
+                    <button class="pill pill-share" onclick="shareProfile()">
+                      Share Profile
+                    </button>
+
+
+
+                    <% } else { %>
+
+
+                      <button id="followBtn" class="btn btn-primary" data-user-id="<%= profileUser._id %>"
+                        data-following="<%= isFollowing %>">
+                        <%= isFollowing ? "Following" : "Follow" %>
+                      </button>
+
+
+                      <a href="/messages/room/<%= 
+                        [user._id.toString(), profileUser._id.toString()]
+                          .sort()
+                          .join('_')
+                      %>" class="btn btn-outline-secondary">
+                        Message
+                      </a>
+
+                      <% } %>
+
+                </div>
+              </div>
+
+              <div class="profile-stats">
+                <span><strong>
+                    <%= blogs.length %>
+                  </strong> posts</span>
+
+                <span onclick="openFollowModal('followers')" style="cursor:pointer">
+                  <strong id="followersCount">
+                    <%= profileUser.followersCount %>
+                  </strong>
+                  followers
+                </span>
+
+                <span onclick="openFollowModal('following')" style="cursor:pointer">
+                  <strong id="followingCount">
+                    <%= profileUser.followingCount %>
+                  </strong>
+                  following
+                </span>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="row g-5">
+
+          <!-- POSTS -->
+          <div class="col-md-7">
+            <div class="content-section blogs-section">
+              <div class="section-title">Posts</div>
+
+              <div class="blogs-scroll">
+                <% if (blogs.length===0) { %>
+                  <p class="text-muted">No posts published yet.</p>
+                  <% } else { %>
+                    <% blogs.forEach(blog=> { %>
+                      <div class="profile-blog-card">
+                        <img src="<%= blog.coverImageURL %>" alt="Cover">
+                        <div>
+                          <a href="/blog/<%= blog._id %>">
+                            <%= blog.title %>
+                          </a>
+                          <div class="text-muted small">
+                            <%= blog.createdAt.toDateString() %>
+                          </div>
+                        </div>
+                      </div>
+                      <% }) %>
+                        <% } %>
+              </div>
+
+            </div>
+          </div>
+
+
+
+          <!-- 💬 COMMENTS -->
+          <div class="col-md-5">
+            <div class="content-section comments-section">
+              <div class="section-title">Comments</div>
+
+              <div class="comments-scroll">
+                <% if (comments.length===0) { %>
+                  <p class="text-muted">No comments posted yet.</p>
+                  <% } else { %>
+                    <% comments.forEach(comment=> { %>
+                      <div class="comment-item">
+                        <div class="small text-muted mb-1">
+                          On
+                          <a href="/blog/<%= comment.blogId %>" class="text-decoration-none">
+                            <%= comment.blogTitle %>
+                          </a>
+                        </div>
+                        <div>
+                          <%= comment.content %>
+                        </div>
+                      </div>
+                      <% }) %>
+                        <% } %>
+              </div>
+
+            </div>
+          </div>
+
+          <div id="avatarModal" class="avatar-modal" onclick="closeAvatarModal()">
+            <img id="avatarModalImg" alt="Profile preview">
+          </div>
+          <div id="followModal" class="avatar-modal">
+            <div style="background:#fff; width:520px; max-height:70vh; overflow:auto; border-radius:14px; padding:20px">
+              <h4 id="modalTitle"></h4>
+              <div id="followList"></div>
+            </div>
+          </div>
+
+
+          <%- include('./partials/scripts') %>
+            <%- include("./partials/socket") %>
+
+</body>
+<script>
+  const PROFILE_USER_ID = "<%= profileUser._id.toString() %>";
+  const LOGGED_IN_USER_ID = "<%= user ? user._id.toString() : '' %>";
+
+  function shareProfile(btn) {
+    if (navigator.share) {
+      navigator.share({
+        title: document.title,
+        text: 'Check out this profile',
+        url: window.location.href
+      }).catch(() => { });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      const oldText = btn.innerText;
+      btn.innerText = "Copied ✓";
+      setTimeout(() => btn.innerText = oldText, 1500);
+    }
+  }
+
+  function openAvatarModal(src) {
+    const modal = document.getElementById("avatarModal");
+    const img = document.getElementById("avatarModalImg");
+    img.src = src;
+    modal.style.display = "flex";
+  }
+
+  function closeAvatarModal() {
+    document.getElementById("avatarModal").style.display = "none";
+  }
+
+  const followBtn = document.getElementById("followBtn");
+
+  if (followBtn) {
+    followBtn.addEventListener("click", async () => {
+      followBtn.disabled = true;
+
+      const userId = followBtn.dataset.userId;
+
+      try {
+        const res = await fetch(`/api/users/${userId}/toggle-follow`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        if (res.status === 401) {
+          window.location.href = "/user/signin";
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!data.success) return;
+
+        followBtn.dataset.following = data.isFollowing;
+        followBtn.textContent = data.isFollowing ? "Following" : "Follow";
+
+        document.getElementById("followersCount").textContent =
+          data.followersCount;
+
+
+
+      } catch (err) {
+        console.error("Follow toggle failed", err);
+      } finally {
+        followBtn.disabled = false;
+      }
+    });
+  }
+
+  function openFollowModal(type) {
+    const modal = document.getElementById("followModal");
+    const list = document.getElementById("followList");
+    const title = document.getElementById("modalTitle");
+
+    title.innerText = type === "followers" ? "Followers" : "Following";
+    list.innerHTML = "Loading...";
+
+    modal.style.display = "flex";
+
+    fetch(`/api/users/<%= profileUser._id %>/${type}`)
+      .then(res => {
+        if (res.status === 401) {
+          window.location.href = "/user/signin";
+          return;
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (!data || !data.success) return;
+
+        if (data.users.length === 0) {
+          list.innerHTML = "<p>No users found</p>";
+          return;
+        }
+
+        list.innerHTML = data.users.map(u => `
+  <div style="
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  ">
+    <div style="display:flex; align-items:center; gap:12px">
+      <img
+        src="${u.profileImageUrl}"
+        style="width:42px;height:42px;border-radius:50%"
+      >
+      <a href="/user/profile/${u._id}" style="font-weight:600">
+        ${u.fullName}
+      </a>
+    </div>
+
+    <div style="display:flex; gap:10px">
+      <button
+        class="pill pill-follow"
+        data-user-id="${u._id}"
+        data-following="${u.isFollowing}"
+        onclick="toggleFollowFromModal(this)"
+      >
+        ${u.isFollowing ? "Following" : "Follow"}
+      </button>
+
+      <a
+        href="/messages/${u._id}"
+        class="pill pill-message"
+      >
+        Message
+      </a>
+    </div>
+  </div>
+`).join("");
+
+
+      });
+  }
+
+  document.getElementById("followModal").addEventListener("click", e => {
+    if (e.target.id === "followModal") {
+      e.target.style.display = "none";
+    }
+  });
+
+  async function toggleFollowFromModal(btn) {
+    const userId = btn.dataset.userId;
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`/api/users/${userId}/toggle-follow`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+
+      if (res.status === 401) {
+        window.location.href = "/user/login";
+        return;
+      }
+
+      const data = await res.json();
+      if (!data.success) return;
+
+      // Update button state
+      btn.dataset.following = data.isFollowing;
+      btn.textContent = data.isFollowing ? "Following" : "Follow";
+
+      // Update main profile following count (if visible)
+
+
+      // Update count ONLY if viewing own profile
+      if (PROFILE_USER_ID === LOGGED_IN_USER_ID) {
+        const followingCount = document.getElementById("followingCount");
+        if (followingCount && data.followingCount !== undefined) {
+          followingCount.textContent = data.followingCount;
+        }
+      }
+
+
+
+    } catch (err) {
+      console.error("Modal follow toggle failed", err);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+
+</script>
+
+</html>

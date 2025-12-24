@@ -1,0 +1,568 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/messages.css">
+<link rel="stylesheet" href="/css/chat.css">
+<link rel="stylesheet" href="/css/conversationHistory.css">
+<div class="messages-layout">
+ <!-- LEFT PANEL -->
+<div class="messages-left">
+
+  <!-- Search -->
+  <div class="search-box">
+    <input type="text" id="userSearch" placeholder="Search users..." />
+  </div>
+
+  <!-- Online users -->
+  <div class="section-title">Online</div>
+  <div class="online-users" id="onlineUsers"></div>
+
+ <!-- Following -->
+<div class="section-title">Following</div>
+<div class="user-list" id="followingList">
+  <% following.forEach(u => { %>
+    <div class="user-item"
+         data-id="<%= u._id %>"
+         data-name="<%= u.fullName.toLowerCase() %>"
+          onclick="openChat('<%= u._id %>')">
+      <img src="<%= u.profileImageUrl %>" />
+      <span><%= u.fullName %></span>
+    </div>
+  <% }) %>
+</div>
+
+</div>
+
+<!-- RIGHT PANEL -->
+  <div class="messages-right">
+  <div class="mobile-topbar">
+    <button id="openSidebar" class="icon-btn">☰</button>
+    <input type="text" id="topUserSearch" placeholder="Search users..." />
+  </div>
+
+ <% if (!roomId) { %>
+  <div id="chatEmpty" class="chat-empty">
+    <h3>Select a conversation</h3>
+    <p>Choose a user to start chatting</p>
+  </div>
+
+  <div id="conversationHistory"></div>
+<% } else { %>
+  <%- include("./partials/chat-box", { chatUser, roomId }) %>
+<% } %>
+
+</div>
+
+
+<!-- Search Backdrop -->
+<div id="searchBackdrop" class="hidden">
+  <div id="searchModal">
+    <div class="modal-content">
+      <h3>Search Results</h3>
+      <div id="searchResults"></div>
+      <button id="showMoreBtn" class="hidden">Show More</button>
+    </div>
+  </div>
+</div>
+
+<!-- Sidebar Backdrop (SEPARATE) -->
+<div id="sidebarBackdrop" class="hidden"></div>
+
+
+
+<%- include("./partials/socket") %>
+
+<script>
+/* ===============================
+   DEVICE KEY INITIALIZATION
+================================ */
+function generateUUID() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+  );
+}
+
+// Open IndexedDB
+function openKeyDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open("secure-chat-db", 1);
+
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore("keys");
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getStoredKey(key) {
+  const db = await openKeyDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction("keys", "readonly");
+    const store = tx.objectStore("keys");
+    const req = store.get(key);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => resolve(null);
+  });
+}
+
+async function saveStoredKey(key, value) {
+  const db = await openKeyDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction("keys", "readwrite");
+    const store = tx.objectStore("keys");
+    store.put(value, key);
+    tx.oncomplete = resolve;
+  });
+}
+
+
+async function generateKeyPair() {
+  const keyPair = await crypto.subtle.generateKey(
+    {
+      name: "ECDH",
+      namedCurve: "P-256",   //  browser-supported
+    },
+    true,
+    ["deriveKey", "deriveBits"]
+  );
+
+  return {
+    publicKey: await crypto.subtle.exportKey("jwk", keyPair.publicKey),
+    privateKey: await crypto.subtle.exportKey("jwk", keyPair.privateKey),
+  };
+}
+
+// ------------------------------------
+// DEVICE KEY PROMISE MAP (per user)
+// ------------------------------------
+const deviceKeyPromiseMap = {};
+
+async function initDeviceKeys(userId) {
+  if (deviceKeyPromiseMap[userId]) {
+    return deviceKeyPromiseMap[userId];
+  }
+
+  deviceKeyPromiseMap[userId] = (async () => {
+
+    //  Get or create DEVICE ID (browser-wide)
+    let deviceId = await getStoredKey("device_id");
+    if (!deviceId) {
+      deviceId = generateUUID();
+      await saveStoredKey("device_id", deviceId);
+    }
+
+    // Get USER-SCOPED keys
+    let keys = await getStoredKey(`keys:${userId}`);
+
+    if (!keys) {
+      const { publicKey, privateKey } = await generateKeyPair();
+
+      keys = { deviceId, publicKey, privateKey };
+      await saveStoredKey(`keys:${userId}`, keys);
+
+      await fetch("/api/devices/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, deviceId, publicKey }),
+      });
+
+      
+    } 
+
+    window.deviceKeys = keys;
+    return keys;
+  })();
+
+  return deviceKeyPromiseMap[userId];
+}
+
+
+const myUserId = "<%= user._id %>";
+window.messagingReady = (async () => {
+  await initDeviceKeys(myUserId);
+
+
+  if (activeChatUserId) {
+    window.sharedSecret = await deriveSharedSecret(activeChatUserId);
+    socket.emit("join-room", "<%= roomId %>");
+  }
+  return true;
+})();
+
+
+async function importPrivateKey(jwk) {
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDH", namedCurve: "P-256" },
+    false,
+    ["deriveBits"]
+  );
+}
+
+async function importPublicKey(jwk) {
+  return crypto.subtle.importKey(
+    "jwk",
+    jwk,
+    { name: "ECDH", namedCurve: "P-256" },
+    false,
+    []
+  );
+}
+
+async function deriveSharedSecret(otherUserId) {
+  // 1. fetch other user's public key
+  const res = await fetch(`/api/devices/public/${otherUserId}`);
+  const data = await res.json();
+
+  if (!data.publicKey) {
+    throw new Error("Public key not found");
+  }
+
+  // 2. import keys
+  const myPrivateKey = await importPrivateKey(
+    window.deviceKeys.privateKey
+  );
+
+  const otherPublicKey = await importPublicKey(
+    data.publicKey
+  );
+
+  // 3. derive shared secret bits
+  const sharedSecret = await crypto.subtle.deriveBits(
+    {
+      name: "ECDH",
+      public: otherPublicKey,
+    },
+    myPrivateKey,
+    256
+  );
+
+  return sharedSecret; // ArrayBuffer
+}
+
+
+  const socket = window.appSocket;
+
+  const userItems = Array.from(document.querySelectorAll(".user-item"));
+  const onlineContainer = document.getElementById("onlineUsers");
+  const allUsersContainer = document.getElementById("followingList");
+  const searchInput = document.getElementById("userSearch");
+  const topSearchInput = document.getElementById("topUserSearch");
+  
+  // -----------------------------
+  // INITIAL SNAPSHOT
+  // -----------------------------
+  socket.emit("get-online-users");
+
+socket.on("user-updated", ({ userId, fullName, profileImageUrl }) => {
+ 
+  const item = document.querySelector(`.user-item[data-id="${userId}"]`);
+  if (!item) return;
+
+item.querySelector("span").innerText = fullName;
+
+// cache bust only image
+item.querySelector("img").src =
+  profileImageUrl + "?v=" + Date.now();
+
+
+});
+
+ socket.on("online-users", (onlineIds) => {
+  const onlineSet = new Set(onlineIds);
+
+  userItems.forEach(item => {
+    const shouldBeOnline = onlineSet.has(item.dataset.id);
+    const isOnline = item.classList.contains("online");
+
+    if (shouldBeOnline && !isOnline) {
+      item.classList.add("online");
+      onlineContainer.appendChild(item);
+    }
+
+    if (!shouldBeOnline && isOnline) {
+      allUsersContainer.appendChild(item);
+    }
+  });
+});
+
+window.appSocket.on("conversation-updated", (data) => {
+  updateConversationRow(data);
+});
+function updateConversationRow({ roomId, lastMessage, lastMessageAt }) {
+  const row = document.querySelector(`[data-room="${roomId}"]`);
+  if (!row) return;
+
+  row.querySelector(".last-message").textContent = lastMessage;
+  row.querySelector(".time").textContent =
+    new Date(lastMessageAt).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  // move to top
+  row.parentNode.prepend(row);
+}
+window.addEventListener("beforeunload", () => {
+  if (!window.roomId) return;
+  window.appSocket.emit("leave-room", window.roomId);
+});
+function switchRoom(newRoomId) {
+  if (window.roomId) {
+    window.appSocket.emit("leave-room", window.roomId);
+  }
+
+  window.roomId = newRoomId;
+  window.appSocket.emit("join-room", newRoomId);
+}
+
+
+  // -----------------------------
+  // LIVE PRESENCE UPDATES
+  // -----------------------------
+  socket.on("user-online", (userId) => {
+    const item = document.querySelector(`.user-item[data-id="${userId}"]`);
+    if (!item || item.classList.contains("online")) return;
+
+    item.classList.add("online");
+    onlineContainer.appendChild(item);
+  });
+
+  socket.on("user-offline", (userId) => {
+    const item = document.querySelector(`.user-item[data-id="${userId}"]`);
+    if (!item) return;
+
+    item.classList.remove("online");
+    allUsersContainer.appendChild(item);
+  });
+
+  // -----------------------------
+  // SEARCH
+  // -----------------------------
+  let searchTimeout;
+[topSearchInput, searchInput].forEach(input => {
+  if (!input) return;
+
+  input.addEventListener("input", (e) => {
+    clearTimeout(searchTimeout);
+    const q = e.target.value.trim();
+
+   if (q.length < 2) {
+  searchBackdrop.classList.add("hidden");
+  return;
+}
+
+    searchTimeout = setTimeout(async () => {
+      const res = await fetch(`/messages/search?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      openSearchModal(data.users);
+    }, 300);
+  });
+});
+  // -----------------------------
+  // NAVIGATE TO CHAT
+  // -----------------------------
+const searchBackdrop = document.getElementById("searchBackdrop");
+const searchResults = document.getElementById("searchResults");
+const showMoreBtn = document.getElementById("showMoreBtn");
+
+function openSearchModal(users) {
+  searchResults.innerHTML = "";
+
+  if (!users || users.length === 0) {
+    searchResults.innerHTML = "<p style='color:#666'>No users found</p>";
+  } else {
+    users.forEach(u => {
+      const div = document.createElement("div");
+      div.className = "user-item";
+      div.innerHTML = `
+        <img src="${u.profileImageUrl}">
+        <span>${u.fullName}</span>
+      `;
+      div.onclick = () => {
+         const myId = "<%= user._id %>";
+  const roomId = [myId, u._id].sort().join("_");
+  window.location.href = `/messages/room/${roomId}`;
+      };
+      searchResults.appendChild(div);
+    });
+  }
+
+  searchBackdrop.classList.remove("hidden");
+}
+
+
+function closeSearchModal() {
+  searchBackdrop.classList.add("hidden");
+    // Clear inputs
+  if (searchInput) searchInput.value = "";
+  if (topSearchInput) topSearchInput.value = "";
+
+  // Clear results
+  searchResults.innerHTML = "";
+}
+
+/* close when clicking outside modal */
+searchBackdrop.addEventListener("click", (e) => {
+  if (e.target === searchBackdrop) {
+    closeSearchModal();
+  }
+});
+
+const sidebar = document.querySelector(".messages-left");
+const openBtn = document.getElementById("openSidebar");
+const backdrop = document.getElementById("sidebarBackdrop");
+
+openBtn.addEventListener("click", () => {
+  sidebar.classList.add("open");
+  backdrop.classList.remove("hidden");
+});
+
+backdrop.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  backdrop.classList.add("hidden");
+});
+
+function clearUnreadUI(roomId) {
+  const item = document.querySelector(
+    `.user-item[data-room-id="${roomId}"]`
+  );
+  if (!item) return;
+
+  const badge = item.querySelector(".badge");
+  if (badge) badge.remove();
+
+  item.classList.remove("unread");
+}
+
+async function openChat(otherUserId) {
+  const myId = window.myUserId;
+  const roomId = [myId, otherUserId].sort().join("_");
+
+  
+  await fetch("/messages/clear-unread", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ roomId })
+  });
+
+  // optional: optimistic UI
+  clearUnreadUI(roomId);
+
+  window.location.href = `/messages/room/${roomId}`;
+}
+
+const activeChatUserId = <%- JSON.stringify(chatUser ? chatUser._id : null) %>;
+
+function updateChatHeaderStatus(text, isOnline = false) {
+  const chatBox = document.querySelector(".chat-box");
+  const statusEl = chatBox?.querySelector(".chat-status");
+
+  if (!statusEl) return;
+
+  statusEl.innerText = text;
+
+  if (isOnline) {
+    statusEl.classList.add("online");     
+  } else {
+    statusEl.classList.remove("online");  
+  }
+}
+
+socket.on("user-online", (userId) => {
+  if (!activeChatUserId) return;
+  if (userId === activeChatUserId) {
+    updateChatHeaderStatus("Online",true);
+  }
+});
+socket.on("user-last-seen", ({ userId, lastSeen }) => {
+  if (!activeChatUserId) return;
+  if (userId === activeChatUserId) {
+    const time = new Date(lastSeen).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    updateChatHeaderStatus(`Last seen at ${time}`);
+  }
+});
+// Refresh conversation list when backend says it changed
+socket.on("conversation-updated", () => {
+  console.log(" conversation-updated received");
+  loadConversationHistory();
+});
+
+window.sharedSecret = null;
+
+//encryption and decryption functions
+
+async function deriveAESKey(sharedSecret) {
+  return crypto.subtle.importKey(
+    "raw",
+    sharedSecret,              
+    { name: "AES-GCM" },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptMessage(plainText, sharedSecret) {
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // nonce
+  const key = await deriveAESKey(sharedSecret);
+
+  const encoded = new TextEncoder().encode(plainText);
+
+  const encryptedBuffer = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encoded
+  );
+
+  return {
+    ciphertext: btoa(
+      String.fromCharCode(...new Uint8Array(encryptedBuffer))
+    ),
+    nonce: btoa(
+      String.fromCharCode(...iv)
+    ),
+  };
+}
+
+async function decryptMessage(ciphertextB64, nonceB64, sharedSecret) {
+  const key = await deriveAESKey(sharedSecret);
+
+  const ciphertext = Uint8Array.from(
+    atob(ciphertextB64),
+    c => c.charCodeAt(0)
+  );
+
+  const iv = Uint8Array.from(
+    atob(nonceB64),
+    c => c.charCodeAt(0)
+  );
+
+  const decryptedBuffer = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    ciphertext
+  );
+
+  return new TextDecoder().decode(decryptedBuffer);
+}
+
+window.encryptMessage = encryptMessage;
+window.decryptMessage = decryptMessage;
+
+
+</script> 
+<script>
+  window.roomId = "<%= roomId %>";
+  window.myUserId = "<%= user._id %>";
+</script>
+
+<script src="/js/chatcrypto.js"></script>
+<script src="/js/conversationHistory.js"></script>
+
+

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('./partials/head') %>
+  <title>Verify OTP</title>
+
+  <style>
+   /* ===== Page Base ===== */
+body {
+  margin: 0;
+  background: #e5e7eb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ===== Auth Wrapper ===== */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  padding: 1rem;
+}
+
+/* ===== Auth Card ===== */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 2.2rem;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== Titles ===== */
+.auth-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.4rem;
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  margin-bottom: 1.8rem;
+}
+
+/* ===== Inputs ===== */
+.auth-card input {
+  border: 1.8px solid #d1d5db;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+}
+
+.auth-card input:focus {
+  border-color: #000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.15);
+}
+
+/* OTP emphasis */
+.otp-input {
+  text-align: center;
+  letter-spacing: 6px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ===== Primary Button ===== */
+.auth-card button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  font-weight: 600;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #111, #000);
+  color: #fff;
+  border: none;
+}
+
+.auth-card button[type="submit"]:hover {
+  background: linear-gradient(180deg, #000, #000);
+}
+
+/* ===== Resend OTP ===== */
+.resend-btn {
+  background: none;
+  border: none;
+  color: #000;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.resend-btn:hover {
+  text-decoration: underline;
+}
+
+  </style>
+</head>
+
+<body>
+
+  <div class="auth-wrapper">
+    <div class="auth-card">
+
+      <!-- Title -->
+      <div class="auth-title">Verify your email</div>
+      <div class="auth-subtitle">
+        Enter the OTP sent to your email address
+      </div>
+
+      <!-- Verify OTP Form -->
+      <form action="/user/verify" method="post">
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label class="form-label">Email address</label>
+          <input
+            type="email"
+            name="email"
+            class="form-control"
+            value="<%= email %>"
+            readonly
+          >
+        </div>
+
+        <!-- OTP -->
+        <div class="mb-4">
+          <label class="form-label">OTP</label>
+          <input
+            type="password"
+            name="otp"
+            class="form-control"
+            placeholder="Enter OTP"
+            required
+          >
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary">
+          Verify OTP
+        </button>
+      </form>
+
+      <!-- Resend OTP -->
+      <form action="/user/resend-otp" method="post" class="text-center mt-3">
+        <input type="hidden" name="email" value="<%= email %>">
+        <button type="submit" class="resend-btn">
+          Didn’t receive OTP? Resend
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <%- include('./partials/scripts') %>
+</body>
+</html>
+

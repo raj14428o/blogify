@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- include('./partials/head') %>
+  <title><%= blog.title %></title>
+
+  <style>
+    body {
+      background: #f3f4f6;
+    }
+
+    .blog-page {
+      width: 100%;
+      padding: 2rem 2.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .blog-page {
+        padding: 1.5rem 1rem;
+      }
+    }
+
+    .blog-header {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .blog-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #111827;
+      line-height: 1.25;
+    }
+
+    .author-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .author-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .author-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e5e7eb;
+    }
+
+    .author-name {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .author-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 12px;
+      opacity: 0.6;
+    }
+
+    .author-actions a,
+    .author-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0;
+    }
+
+    .author-actions:hover {
+      opacity: 1;
+    }
+
+    /* ===== Main Wrapper ===== */
+    .blog-main-wrapper {
+      display: flex;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 2.5rem auto;
+      align-items: stretch;
+    }
+
+    @media (max-width: 768px) {
+      .blog-main-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    /* ===== Cover ===== */
+    .cover-container {
+      flex: 0 0 420px;
+      background: #f9fafb;
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+      box-sizing: border-box;
+    }
+
+    .cover-container img {
+      width: 100%;
+      height: auto;
+      object-fit: contain;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 0 0 1px #e5e7eb;
+    }
+
+    /* ===== Content ===== */
+    .blog-content-wrapper {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.06);
+      max-height: 85vh;
+      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .blog-content-inner {
+      padding: 2.5rem 2.8rem;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .blog-content-wrapper {
+        max-height: none;
+        overflow: visible;
+        display: block;
+      }
+
+      .blog-content-inner {
+        padding: 2rem 1.5rem;
+      }
+    }
+
+    .blog-content-wrapper::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .blog-content-wrapper::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 10px;
+    }
+
+    #blog-content {
+      font-size: 1.03rem;
+      line-height: 1.8;
+      color: #1f2937;
+    }
+
+    #blog-content img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin: 1.5rem 0;
+    }
+
+    pre {
+      background: #0f172a;
+      color: #e5e7eb;
+      padding: 1.2rem 1.4rem;
+      border-radius: 12px;
+      overflow-x: auto;
+      margin: 1.8rem 0;
+    }
+
+    .comments-wrapper {
+      max-width: 1200px;
+      margin: 3rem auto;
+    }
+
+    .comment {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1.2rem;
+      align-items: flex-start;
+    }
+
+    .comment-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e5e7eb;
+    }
+
+    .comment-box {
+      background: #ffffff;
+      padding: 10px 14px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      width: 100%;
+    }
+
+    .comment-author {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #111827;
+      text-decoration: none;
+    }
+
+    .comment-author:hover {
+      text-decoration: underline;
+    }
+
+    .comment-content {
+      font-size: 0.9rem;
+      margin-top: 4px;
+      color: #374151;
+    }
+
+    /* ===== Image Preview Modal (Reusable) ===== */
+.image-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.image-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+/* Cover hover cue */
+.clickable-cover {
+  cursor: zoom-in;
+}
+
+  </style>
+</head>
+
+<body>
+  <%- include('./partials/nav') %>
+
+  <div class="blog-page">
+
+    <!-- Header -->
+    <div class="blog-header">
+      <h1 class="blog-title"><%= blog.title %></h1>
+
+      <div class="author-row">
+        <a href="/user/profile/<%= blog.createdBy._id %>" class="author-link">
+          <img src="<%= blog.createdBy.profileImageUrl %>" class="author-avatar">
+          <span class="author-name"><%= blog.createdBy.fullName %></span>
+        </a>
+
+        <span>·</span>
+        <span><%= new Date(blog.createdAt).toDateString() %></span>
+
+        <% if (user && user._id.toString() === blog.createdBy._id.toString()) { %>
+          <div class="author-actions">
+            <a href="/blog/<%= blog._id %>/edit">✏️</a>
+            <form action="/blog/<%= blog._id %>?_method=DELETE" method="POST">
+              <button onclick="return confirm('Delete this blog?')">🗑️</button>
+            </form>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Image + Content -->
+    <div class="blog-main-wrapper">
+      <div class="cover-container">
+        <img 
+  src="<%= blog.coverImageURL %>" 
+  alt="Blog cover"
+  id="coverImage"
+  class="clickable-cover"
+  onclick="openCoverModal(this.src)"
+>
+      </div>
+
+      <div class="blog-content-wrapper">
+        <div class="blog-content-inner">
+          <div id="blog-content"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Markdown Render -->
+    <script type="module">
+      import { marked } from 'https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js';
+      import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.0.5/+esm';
+
+      const raw = document.getElementById('raw-markdown').textContent;
+      document.getElementById('blog-content').innerHTML =
+        DOMPurify.sanitize(marked.parse(raw));
+    </script>
+
+    <script type="text/plain" id="raw-markdown">
+<%- blog.body %>
+    </script>
+
+    <!-- Comments -->
+    <div class="comments-wrapper">
+      <h3>Comments  (<span id="commentCount"><%= comments.length %></span>)</h3>
+
+      <% if (user) { %>
+        <form action="/blog/comment/<%= blog._id %>" method="post">
+          <input class="form-control" name="content" placeholder="Write a comment...">
+          <button class="btn btn-dark btn-sm mt-2">Post</button>
+        </form>
+      <% } %>
+
+      <div class="mt-4" id="commentsList">
+        <% comments.forEach(c => { %>
+          <div class="comment">
+            <a href="/user/profile/<%= c.createdBy._id %>">
+              <img src="<%= c.createdBy.profileImageUrl %>" class="comment-avatar">
+            </a>
+
+            <div class="comment-box">
+              <a href="/user/profile/<%= c.createdBy._id %>" class="comment-author">
+                <%= c.createdBy.fullName %>
+              </a>
+              <div class="comment-content">
+                <%= c.content %>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+      <div id="coverModal" class="image-modal" onclick="closeCoverModal()">
+  <img id="coverModalImg" alt="Cover preview">
+</div>
+
+     <%- include('./partials/scripts') %>
+     <%- include("./partials/socket") %>
+
+  </body>
+  <script>
+
+function openCoverModal(src) {
+  document.getElementById("coverModalImg").src = src;
+  document.getElementById("coverModal").style.display = "flex";
+}
+
+function closeCoverModal() {
+  document.getElementById("coverModal").style.display = "none";
+}
+
+ const socket = window.appSocket;
+  const BLOG_ID = "<%= blog._id %>";
+
+  // join this blog's room
+  socket.on("connect", () => {
+  socket.emit("join-blog", BLOG_ID);
+});
+
+  socket.on("new-comment", (comment) => {
+    appendComment(comment);
+    const countEl = document.getElementById("commentCount");
+   countEl.textContent = Number(countEl.textContent) + 1;
+  });
+
+  function appendComment(comment) {
+    const div = document.createElement("div");
+    div.className = "comment";
+
+    div.innerHTML = `
+      <a href="/user/profile/${comment.userId}">
+        <img src="${comment.userAvatar}" class="comment-avatar">
+      </a>
+
+      <div class="comment-box">
+        <a href="/user/profile/${comment.userId}" class="comment-author">
+          ${comment.userName}
+        </a>
+        <div class="comment-content">
+          ${comment.content}
+        </div>
+      </div>
+    `;
+
+    document.getElementById("commentsList").prepend(div);
+  }
+</script>
+
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+

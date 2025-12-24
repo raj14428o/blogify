@@ -1,0 +1,80 @@
+html, body {
+  overflow-x: hidden;
+}
+
+
+.date-separator {
+  align-self: center;
+  margin: 10px 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #555;
+  background: #e0e0e0;
+  border-radius: 12px;
+}
+
+.chat-messages::-webkit-scrollbar {
+  display: none;
+}
+
+.chat-messages {
+  display: flex;
+  flex-direction: column;   
+  gap: 0;
+  padding: 16px;
+  overflow-x: hidden; 
+  overflow-y: auto;
+}
+
+.message {
+  display: flex;
+   width: 100%;
+   
+}
+
+.message.me {
+  justify-content: flex-end;
+}
+
+.message.them {
+  justify-content: flex-start;
+}
+
+.bubble {
+  position: relative;
+  background: #000;
+  color: #fff;
+  padding: 8px 32px 18px 10px;  
+  border-radius: 14px;
+  max-width: 65%;
+  width: fit-content;      
+  word-wrap: break-word;
+  min-width: 36px; 
+}
+
+
+.message.them .bubble {
+  background: #111;
+}
+
+.meta {
+  position:absolute;
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  align-items: center;
+  font-size: 10px;
+  opacity: 0.7;
+  white-space: nowrap;
+  right: 8px;
+  bottom: 4px;
+}
+
+/* -----------------------------
+   COMPACT GROUPING
+------------------------------*/
+
+.message + .message.me,
+.message + .message.them {
+  margin-top: 2px;
+}
