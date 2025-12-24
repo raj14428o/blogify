@@ -1,12 +1,47 @@
 
 console.log("chatCrypto.js loaded");
+
 // ------------------------------------------------
-  // MESSAGE STATES
-  // ------------------------------------------------
-  const MESSAGE_STATE = {
-    PENDING: "pending",
-    SENT: "sent",
-  };
+// MESSAGE STATES
+// ------------------------------------------------
+const MESSAGE_STATE = {
+  PENDING: "pending",
+  SENT: "sent",
+  SEEN: "seen",
+};
+
+window.appSocket.on("messages-seen", ({ roomId, seenBy }) => {
+  if (roomId !== window.roomId) return;
+  if (seenBy === window.myUserId) return;
+
+  document
+    .querySelectorAll(".message.me")
+    .forEach(msg => {
+      updateMessageState(msg.dataset.id, MESSAGE_STATE.SEEN);
+    });
+});
+
+function updateMessageState(messageId, newState) {
+  const message = document.querySelector(
+    `.message[data-id="${messageId}"]`
+  );
+  if (!message) return;
+
+  // only sent messages have state
+  if (!message.classList.contains("me")) return;
+
+  const stateEl = message.querySelector(".state");
+  if (!stateEl) return;
+
+  if (newState === MESSAGE_STATE.PENDING) {
+    stateEl.textContent = "⏳";
+  } else if (newState === MESSAGE_STATE.SENT) {
+    stateEl.textContent = "✓";
+  } else if (newState === MESSAGE_STATE.SEEN) {
+    stateEl.textContent = "✓✓";
+  }
+}
+
 
 document.addEventListener("DOMContentLoaded", async () => {
 
@@ -20,7 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   await window.messagingReady;
 
-  const myUserId = window.myUserId; 
+  const myUserId = window.myUserId;
   const roomId = window.roomId;
 
   if (!roomId || !myUserId) {
@@ -52,9 +87,10 @@ document.addEventListener("DOMContentLoaded", async () => {
           id: msg._id,
           text,
           sender: msg.sender === myUserId ? "me" : "them",
-          state: "sent",
+          state: msg.readAt ? MESSAGE_STATE.SEEN : MESSAGE_STATE.SENT,
           timestamp: msg.createdAt,
         });
+
       } catch (err) {
         console.error(" Failed to decrypt message", err);
       }
@@ -75,12 +111,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   if (typeof window.encryptMessage !== "function" ||
-      typeof window.decryptMessage !== "function") {
+    typeof window.decryptMessage !== "function") {
     console.error("crypto helpers missing");
     return;
   }
 
-  
+
   // ------------------------------------------------
   // SEND MESSAGE
   // ------------------------------------------------
@@ -123,6 +159,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (data.sender === myUserId) return;
     
+    console.log("📩 receive-message payload:", data);
     try {
       const text = await window.decryptMessage(
         data.ciphertext,
@@ -131,12 +168,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       );
 
       renderMessage({
-        id: data.messageId,
+        id: data._id,
         text,
         sender: data.sender === myUserId ? "me" : "them",
-        state: MESSAGE_STATE.SENT,
+        state: data.readAt ? MESSAGE_STATE.SEEN : MESSAGE_STATE.SENT,
         timestamp: data.createdAt || Date.now(),
       });
+
     } catch (err) {
       console.error("Decryption failed:", err);
     }
@@ -171,46 +209,46 @@ document.addEventListener("DOMContentLoaded", async () => {
   // UI HELPERS
   // ------------------------------------------------
   function formatTime(ts) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+    const d = new Date(ts);
+    return d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
 
-function getDateLabel(ts) {
-  const d = new Date(ts);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
+  function getDateLabel(ts) {
+    const d = new Date(ts);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
 
-  const isSameDay = (a, b) =>
-    a.getDate() === b.getDate() &&
-    a.getMonth() === b.getMonth() &&
-    a.getFullYear() === b.getFullYear();
+    const isSameDay = (a, b) =>
+      a.getDate() === b.getDate() &&
+      a.getMonth() === b.getMonth() &&
+      a.getFullYear() === b.getFullYear();
 
-  if (isSameDay(d, today)) return "Today";
-  if (isSameDay(d, yesterday)) return "Yesterday";
+    if (isSameDay(d, today)) return "Today";
+    if (isSameDay(d, yesterday)) return "Yesterday";
 
-  return d.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+    return d.toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
 
-let lastRenderedDate = null;
+  let lastRenderedDate = null;
 
-function renderDateSeparator(label) {
-  const chat = document.getElementById("chatMessages");
-  if (!chat) return;
+  function renderDateSeparator(label) {
+    const chat = document.getElementById("chatMessages");
+    if (!chat) return;
 
-  const sep = document.createElement("div");
-  sep.className = "date-separator";
-  sep.textContent = label;
+    const sep = document.createElement("div");
+    sep.className = "date-separator";
+    sep.textContent = label;
 
-  chat.appendChild(sep);
-}
+    chat.appendChild(sep);
+  }
 
   function renderMessage(msg) {
     const chat = document.getElementById("chatMessages");
@@ -219,49 +257,46 @@ function renderDateSeparator(label) {
     const empty = chat.querySelector(".chat-empty");
     if (empty) empty.remove();
 
- // Date separator logic
+    // Date separator logic
 
-function renderDateSeparator(label) {
-  const chat = document.getElementById("chatMessages");
-  if (!chat) return;
+    function renderDateSeparator(label) {
+      const chat = document.getElementById("chatMessages");
+      if (!chat) return;
 
-  const sep = document.createElement("div");
-  sep.className = "date-separator";
-  sep.textContent = label;
+      const sep = document.createElement("div");
+      sep.className = "date-separator";
+      sep.textContent = label;
 
-  chat.appendChild(sep);
-}
+      chat.appendChild(sep);
+    }
 
 
     const div = document.createElement("div");
     div.className = `message ${msg.sender}`;
     div.dataset.id = msg.id;
 
-      div.innerHTML = `
-    <div class="bubble">
-      <span class="text"></span>
-      <div class="meta">
-        <span class="time">${formatTime(msg.timestamp)}</span>
-        <span class="state">
-          ${msg.state === MESSAGE_STATE.PENDING ? "⏳" : "✓"}
-        </span>
-      </div>
-    </div>
-  `;
+    const showState = msg.sender === "me";
 
+    div.innerHTML = `
+  <div class="bubble">
+    <span class="text"></span>
+    <div class="meta">
+      <span class="time">${formatTime(msg.timestamp)}</span>
+      ${showState
+        ? `<span class="state">${msg.state === MESSAGE_STATE.PENDING
+          ? "⏳"
+          : msg.state === MESSAGE_STATE.SEEN
+            ? "✓✓"
+            : "✓"
+        }</span>`
+        : ""
+      }
+    </div>
+  </div>
+`;
     div.querySelector(".text").textContent = msg.text;
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
   }
-
-  function updateMessageState(messageId, newState) {
-    const el = document.querySelector(
-      `.message[data-id="${messageId}"] .state`
-    );
-    if (!el) return;
-
-    el.textContent = newState === MESSAGE_STATE.SENT ? "✓" : "⏳";
-  }
-
 });
 

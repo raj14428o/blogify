@@ -5,7 +5,8 @@ const getRoomId = require("../utils/chatroom");
 const authMiddleware = require("../middlewares/attachUser");
 const Message = require("../Models/message");
 const Conversation = require("../Models/conversation");
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
+
 // routes/message.js
 router.get("/conversations", async (req, res) => {
  
@@ -22,6 +23,20 @@ router.get("/conversations", async (req, res) => {
     .lean();
 
   res.json({ conversations });
+});
+router.post("/clear-unread", authMiddleware, async (req, res) => {
+  const { roomId } = req.body;
+
+  await Conversation.updateOne(
+    { roomId },
+    {
+      $set: {
+        [`unreadCount.${req.user._id}`]: 0
+      }
+    }
+  );
+
+  res.json({ success: true });
 });
 
 // Messages list page
@@ -102,7 +117,7 @@ router.get("/:roomId", authMiddleware, async (req, res) => {
 
   const messages = await Message.find({ roomId })
     .sort({ createdAt: 1 })
-    .select("sender ciphertext nonce createdAt");
+    .select("sender ciphertext nonce createdAt readAt");
 
   res.json(messages);
 });

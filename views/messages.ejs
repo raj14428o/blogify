@@ -1,6 +1,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="/css/messages.css">
 <link rel="stylesheet" href="/css/chat.css">
+<link rel="stylesheet" href="/css/conversationHistory.css">
 <div class="messages-layout">
  <!-- LEFT PANEL -->
 <div class="messages-left">
@@ -390,9 +391,33 @@ backdrop.addEventListener("click", () => {
   backdrop.classList.add("hidden");
 });
 
-function openChat(otherUserId) {
-  const myId = "<%= user._id %>";
+function clearUnreadUI(roomId) {
+  const item = document.querySelector(
+    `.user-item[data-room-id="${roomId}"]`
+  );
+  if (!item) return;
+
+  const badge = item.querySelector(".badge");
+  if (badge) badge.remove();
+
+  item.classList.remove("unread");
+}
+
+async function openChat(otherUserId) {
+  const myId = window.myUserId;
   const roomId = [myId, otherUserId].sort().join("_");
+
+  
+  await fetch("/messages/clear-unread", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ roomId })
+  });
+
+  // optional: optimistic UI
+  clearUnreadUI(roomId);
+
   window.location.href = `/messages/room/${roomId}`;
 }
 
@@ -431,7 +456,7 @@ socket.on("user-last-seen", ({ userId, lastSeen }) => {
 });
 // Refresh conversation list when backend says it changed
 socket.on("conversation-updated", () => {
-  console.log("🔥 conversation-updated received");
+  console.log(" conversation-updated received");
   loadConversationHistory();
 });
 

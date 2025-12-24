@@ -22,6 +22,7 @@ const deviceRoutes = require("./routes/device");
 const app = express();
 const PORT = process.env.PORT;
 const server = http.createServer(app);
+const roomPresence = new Map();
 
 const io = new Server(server, {
   cors: {
@@ -74,26 +75,45 @@ io.on("connection", async (socket) => {
   });
 
   // JOIN CHAT ROOM
-  socket.on("join-room", (roomId) => {
+  socket.on("join-room",async (roomId) => {
     socket.join(roomId);
+    
+    if (!roomPresence.has(roomId)) {
+    roomPresence.set(roomId, new Set());
+  }
+  roomPresence.get(roomId).add(socket.userId);
+  
+     await Message.updateMany(
+    {
+      roomId,
+      sender: { $ne: socket.userId },
+      readAt: null,
+    },
+    {
+      $set: { readAt: new Date() },
+    }
+  );
+   socket.to(roomId).emit("messages-seen", {
+    roomId,
+    seenBy: socket.userId,
+  });
     console.log(`User ${userId} joined room ${roomId}`);
   });
 
 
 
 // RECEIVE MESSAGE FROM SENDER
-socket.on("send-message", async ({ roomId, messageId, ciphertext, nonce }) => {
+socket.on("send-message", async ({ roomId, ciphertext, nonce }) => {
   if (!roomId || !ciphertext || !nonce) return;
 
   const senderId = socket.userId;
-
   const [u1, u2] = roomId.split("_");
 
-  // convert to ObjectIds
-  const user1 = u2;
-  const user2 = u1;
-
   const receiverId = senderId === u1 ? u2 : u1;
+
+  // presence check
+  const usersInRoom = roomPresence.get(roomId) || new Set();
+  const receiverInRoom = usersInRoom.has(receiverId);
 
   // save encrypted message
   const message = await Message.create({
@@ -101,28 +121,34 @@ socket.on("send-message", async ({ roomId, messageId, ciphertext, nonce }) => {
     sender: senderId,
     ciphertext,
     nonce,
+    readAt: receiverInRoom ? new Date() : null, 
   });
 
-  //  update / create conversation
-  await Conversation.findOneAndUpdate(
-  { roomId },
-  {
+  // build update safely
+  const update = {
     $set: {
       roomId,
-      members: [user1, user2],
+      members: [u1, u2],
       lastMessage: {
         text: "Encrypted message",
         sender: senderId,
       },
       lastMessageAt: message.createdAt,
     },
-    $inc: { [`unreadCount.${receiverId}`]: 1 },
-  },
-  { upsert: true, new: true }
-);
+  };
 
+  // only increment unread if receiver NOT in room
+  if (!receiverInRoom) {
+    update.$inc = { [`unreadCount.${receiverId}`]: 1 };
+  }
 
-  // send message to room (exclude sender tab duplication handled client-side)
+  await Conversation.findOneAndUpdate(
+    { roomId },
+    update,
+    { upsert: true, new: true }
+  );
+
+  // send message to room
   socket.to(roomId).emit("receive-message", {
     _id: message._id,
     roomId,
@@ -130,11 +156,21 @@ socket.on("send-message", async ({ roomId, messageId, ciphertext, nonce }) => {
     ciphertext,
     nonce,
     createdAt: message.createdAt,
+    readAt: message.readAt, 
   });
 
-  //  notify clients to refresh conversation list
+  //  if receiver already in room → mark seen instantly
+  if (receiverInRoom) {
+    io.to(roomId).emit("messages-seen", {
+      roomId,
+      seenBy: receiverId,
+    });
+  }
+
+  // notify clients to refresh conversation list
   io.to(roomId).emit("conversation-updated");
 });
+
 
 
 
